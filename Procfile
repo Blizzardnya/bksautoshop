@@ -1,0 +1,1 @@
+web: gunicorn bksautoshop.wsgi --log-file -

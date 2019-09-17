@@ -1,0 +1,31 @@
+{% extends "bid/base.html" %}
+
+{% block title %}<title>Bksautoshop Index</title>{% endblock %}
+
+{% block content %}
+    <h1>Bksautoshop Home</h1>
+    <p>Welcome to <em>LocalLibrary</em>, a very basic Django website developed as a tutorial example on the Mozilla Developer Network.</p>
+    <h2>Dynamic content</h2>
+    <p>The library has the following record counts:</p>
+    <ul class="list-group">
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>Books:</strong> <span class="badge badge-primary badge-pill">{{ num_books }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>Copies:</strong> <span class="badge badge-primary badge-pill">{{ num_instances }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>Copies available:</strong> <span class="badge badge-primary badge-pill">{{ num_instances_available }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>Authors:</strong> <span class="badge badge-primary badge-pill">{{ num_authors }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>Genres:</strong> <span class="badge badge-primary badge-pill">{{ num_genres }}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>Languages:</strong> <span class="badge badge-primary badge-pill">{{ num_languages }}</span>
+        </li>
+    </ul>
+    <hr>
+{% endblock %}

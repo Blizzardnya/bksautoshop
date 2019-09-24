@@ -25,6 +25,19 @@ class ProductMatrix(models.Model):
         return self.name
 
 
+class Category(models.Model):
+    """ Модель категории товара """
+    name = models.CharField("Наименование матрицы", max_length=80)
+    root_category = models.ForeignKey('self', on_delete=models.CASCADE)
+
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return self.name
+
+
 class Product(models.Model):
     """ Модель товара """
     barcode = models.CharField("Штрих-код", max_length=13)
@@ -33,6 +46,7 @@ class Product(models.Model):
     unit = models.ForeignKey(Unit, verbose_name="Мера исчисления", on_delete=models.PROTECT)
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     matrix = models.ManyToManyField(ProductMatrix, verbose_name="Матрица товаров")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT)
 
     ORDINARY = 'O'
     COOLED = 'C'
@@ -62,7 +76,7 @@ class Organization(models.Model):
     """ Абстрактная модель организации """
     name = models.CharField("Наименование организации", max_length=150, db_index=True)
     UNP = models.CharField("УНП", max_length=10)
-    filial_number = models.CharField("Код филиала", max_length=4, null=True, blank=True)
+    branch_code = models.CharField("Код филиала", max_length=4, null=True, blank=True)
 
     class Meta:
         abstract = True

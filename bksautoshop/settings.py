@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'bid.apps.BidConfig',
     'accounts.apps.AccountsConfig',
     'orders.apps.OrdersConfig',
+    'nested_admin',
 ]
 
 MIDDLEWARE = [

@@ -26,4 +26,5 @@ urlpatterns = [
         path('', include('django.contrib.auth.urls')),
     ])),
     path('', RedirectView.as_view(url='/bid/', permanent=True)),
+    path('nested_admin/', include('nested_admin.urls')),
 ]

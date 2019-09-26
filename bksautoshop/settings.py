@@ -19,12 +19,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'sv%+ytcc6ps1o45r!klmvy&0^rglfd&fnr4x#expmc_n7t-4d7'
-
-
-ALLOWED_HOSTS = []
-
 
 # Application definition
 
@@ -79,7 +73,7 @@ WSGI_APPLICATION = 'bksautoshop.wsgi.application'
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators
 
-LOGIN_URL = '/login/'
+LOGIN_URL = '/accounts/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 

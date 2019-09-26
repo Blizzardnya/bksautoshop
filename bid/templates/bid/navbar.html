@@ -2,47 +2,47 @@
 <header>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <!-- Brand and toggle get grouped for better mobile display -->
-        <a class="navbar-brand" href="{% url 'index' %}">Bksautoshop</a>
+        <a class="navbar-brand" href="{% url 'bid:index' %}">Bksautoshop</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavDropdown" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
             <ul class="navbar-nav mr-auto">
                 {% if request.user.is_authenticated %}
-                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="AccountDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Account
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="AccountDropdownMenuLink">
-                        <a class="dropdown-item" href="{% url 'my-borrowed' %}">My books</a>
-                        {% if perms.catalog.can_mark_returned %}
-                            <a class="dropdown-item" href="{% url 'loan-borrowed' %}">All loan books</a>
-                        {% endif %}
-                    </div>
-                </li>
+{#                 <li class="nav-item dropdown">#}
+{#                    <a class="nav-link dropdown-toggle" href="#" id="AccountDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
+{#                        Account#}
+{#                    </a>#}
+{#                    <div class="dropdown-menu" aria-labelledby="AccountDropdownMenuLink">#}
+{#                        <a class="dropdown-item" href="{% url 'my-borrowed' %}">My books</a>#}
+{#                        {% if perms.catalog.can_mark_returned %}#}
+{#                            <a class="dropdown-item" href="{% url 'loan-borrowed' %}">All loan books</a>#}
+{#                        {% endif %}#}
+{#                    </div>#}
+{#                </li>#}
                 {% endif %}
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="AuthorDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Authors
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="AuthorDropdownMenuLink">
-                        {% if perms.catalog.can_mark_returned %}
-                            <a class="dropdown-item" href="{% url 'author_create' %}">Create author</a>
-                        {% endif %}
-                        <a class="dropdown-item" href="{% url 'authors' %}">View authors</a>
-                    </div>
-                </li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="BooksDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                        Books
-                    </a>
-                    <div class="dropdown-menu" aria-labelledby="BooksDropdownMenuLink">
-                        {% if perms.catalog.can_mark_returned %}
-                            <a class="dropdown-item" href="{% url 'book_create' %}">Create book</a>
-                        {% endif %}
-                        <a class="dropdown-item" href="{% url 'books' %}">View all books</a>
-                    </div>
-                </li>
+{#                <li class="nav-item dropdown">#}
+{#                    <a class="nav-link dropdown-toggle" href="#" id="AuthorDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
+{#                        Authors#}
+{#                    </a>#}
+{#                    <div class="dropdown-menu" aria-labelledby="AuthorDropdownMenuLink">#}
+{#                        {% if perms.catalog.can_mark_returned %}#}
+{#                            <a class="dropdown-item" href="{% url 'author_create' %}">Create author</a>#}
+{#                        {% endif %}#}
+{#                        <a class="dropdown-item" href="{% url 'authors' %}">View authors</a>#}
+{#                    </div>#}
+{#                </li>#}
+{#                <li class="nav-item dropdown">#}
+{#                    <a class="nav-link dropdown-toggle" href="#" id="BooksDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
+{#                        Books#}
+{#                    </a>#}
+{#                    <div class="dropdown-menu" aria-labelledby="BooksDropdownMenuLink">#}
+{#                        {% if perms.catalog.can_mark_returned %}#}
+{#                            <a class="dropdown-item" href="{% url 'book_create' %}">Create book</a>#}
+{#                        {% endif %}#}
+{#                        <a class="dropdown-item" href="{% url 'books' %}">View all books</a>#}
+{#                    </div>#}
+{#                </li>#}
             </ul>
             {% if request.user.is_authenticated %}
                 <a href="{% url 'logout' %}" class="btn btn-outline-success my-2 my-sm-0">Logout</a>

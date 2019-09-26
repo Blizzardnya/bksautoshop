@@ -32,4 +32,11 @@ class ProviderAdmin(admin.ModelAdmin):
     search_fields = ['name', 'UNP', 'branch_code']
 
 
-admin.site.register(Unit, ProductMatrix)
+@admin.register(Unit)
+class UnitAdmin(admin.ModelAdmin):
+    list_display = ['name', 'short_name']
+    list_display_links = ('name',)
+    search_fields = ['name']
+
+
+admin.site.register(ProductMatrix)

@@ -3,7 +3,8 @@ from django.db import models
 
 class Unit(models.Model):
     """ Модель меры исчисления """
-    name = models.CharField("Наименование меры исчисления", max_length=30)
+    name = models.CharField("Полное наименование меры исчисления", max_length=30)
+    short_name = models.CharField("Краткое наименование меры исчисления", max_length=10)
 
     class Meta:
         verbose_name = 'Мера исчисления'
@@ -28,7 +29,7 @@ class ProductMatrix(models.Model):
 class Category(models.Model):
     """ Модель категории товара """
     name = models.CharField("Наименование матрицы", max_length=80)
-    root_category = models.ForeignKey('self', on_delete=models.CASCADE)
+    root_category = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Категория'

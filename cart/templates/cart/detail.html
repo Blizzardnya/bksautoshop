@@ -12,7 +12,7 @@
                         {% with totail_items=cart|length %}
                             {% if cart|length > 0 %}
                                 <span style="color: #ffffff">
-                                    {{ totail_items }} услуг{{ totail_items|pluralize }}
+                                    {{ totail_items }} товар{{ totail_items|pluralize }}
                                 </span>
                                 {% else %}
                                 Ваша корзина пуста.
@@ -60,8 +60,8 @@
                 </tbody>
             </table>
         <p class="text-right">
-            <a href="{% url "shop:products" %}" class="btn btn-lg btn-danger">Продолжить оформление заказа</a>
-            <a href="{% url "orders:order_create" %}" class="btn btn-lg btn-success">Оформить чек</a>
+            <a href="{% url "bid:product_list" %}" class="btn btn-lg btn-danger">Продолжить оформление заказа</a>
+{#            <a href="{% url "orders:order_create" %}" class="btn btn-lg btn-success">Оформить чек</a>#}
         </p>
         </div>
     </div>

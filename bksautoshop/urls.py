@@ -19,13 +19,13 @@ from django.views.generic import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('bid/', include('bid.urls')),
     path('orders/', include('orders.urls')),
     path('cart/', include('cart.urls')),
     path('accounts/', include([
         path('', include('accounts.urls')),
         path('', include('django.contrib.auth.urls')),
     ])),
-    path('', RedirectView.as_view(url='/bid/', permanent=True)),
+    path('', include('bid.urls')),
+    # path('', RedirectView.as_view(url='/bid/', permanent=True)),
     path('nested_admin/', include('nested_admin.urls')),
 ]

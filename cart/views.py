@@ -14,7 +14,10 @@ def cart_add(request, product_id):
     if form.is_valid():
         cd = form.cleaned_data
         cart.add(product=product, quantity=cd['quantity'], update_quantity=cd['update'])
-    return redirect('shop:products')
+    # if not category_slug:
+    return redirect('bid:product_list')
+    # else:
+    #     return redirect('bid:product_list_by_category')
 
 
 def cart_remove(request, product_id):

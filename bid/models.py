@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 
 class Unit(models.Model):
@@ -30,7 +31,8 @@ class Category(models.Model):
     """ Модель категории товара """
     name = models.CharField("Наименование матрицы", max_length=80)
     slug = models.SlugField("ЧПУ", max_length=150, unique=True, db_index=True)
-    root_category = models.ForeignKey('self', verbose_name='Родительская категория', on_delete=models.CASCADE, null=True, blank=True)
+    root_category = models.ForeignKey('self', verbose_name='Родительская категория', on_delete=models.CASCADE,
+                                      null=True, blank=True)
 
     class Meta:
         verbose_name = 'Категория'
@@ -38,6 +40,9 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_absolute_url(self):
+        return reverse('bid:product_list_by_category', args=[self.slug])
 
 
 class Product(models.Model):
@@ -66,7 +71,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
 
     class Meta:
-        ordering = ('name', )
+        ordering = ('name',)
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
 
@@ -82,7 +87,7 @@ class Organization(models.Model):
 
     class Meta:
         abstract = True
-        ordering = ('name', )
+        ordering = ('name',)
 
     def __str__(self):
         return self.name

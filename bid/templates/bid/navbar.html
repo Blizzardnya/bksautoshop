@@ -9,17 +9,15 @@
         <div class="collapse navbar-collapse" id="navbarNavDropdown">
             <ul class="navbar-nav mr-auto">
                 {% if request.user.is_authenticated %}
-{#                 <li class="nav-item dropdown">#}
-{#                    <a class="nav-link dropdown-toggle" href="#" id="AccountDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}
-{#                        Account#}
-{#                    </a>#}
-{#                    <div class="dropdown-menu" aria-labelledby="AccountDropdownMenuLink">#}
-{#                        <a class="dropdown-item" href="{% url 'my-borrowed' %}">My books</a>#}
-{#                        {% if perms.catalog.can_mark_returned %}#}
-{#                            <a class="dropdown-item" href="{% url 'loan-borrowed' %}">All loan books</a>#}
-{#                        {% endif %}#}
-{#                    </div>#}
-{#                </li>#}
+                 <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="ProductsDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Товары
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="ProductsDropdownMenuLink">
+                        <a class="dropdown-item" href="{% url 'bid:product_list' %}">Список товаров</a>
+{#                        <a class="dropdown-item" href="{% url 'loan-borrowed' %}">All loan books</a>#}
+                    </div>
+                </li>
                 {% endif %}
 {#                <li class="nav-item dropdown">#}
 {#                    <a class="nav-link dropdown-toggle" href="#" id="AuthorDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}

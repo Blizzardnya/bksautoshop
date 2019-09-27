@@ -28,17 +28,19 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def get_total_cost(self):
-        return round(sum(item.get_cost() for item in self.items.all()))
+        return round(sum(item.get_cost() for item in self.items.all()), 2)
 
     def __str__(self):
         return 'Order {}'.format(self.id)
+
+    get_total_cost.short_description = 'Итого'
 
 
 class OrderItem(models.Model):
     """ Модель строк заказа """
     order = models.ForeignKey(Order, verbose_name="Заказ", related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, verbose_name="Товар", related_name='order_item', on_delete=models.CASCADE)
-    # price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
+    price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     quantity = models.DecimalField("Количество", max_digits=10, decimal_places=2)
 
     class Meta:
@@ -46,11 +48,12 @@ class OrderItem(models.Model):
         verbose_name_plural = 'Строки заказа'
 
     def get_cost(self):
-        # return self.price * self.quantity
-        return self.product.price * self.quantity
+        return round(self.price * self.quantity, 2)
 
     def __str__(self):
         return self.product.name
+
+    get_cost.short_description = 'Стоимость'
 
 
 class Container(models.Model):

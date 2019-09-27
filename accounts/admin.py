@@ -6,6 +6,7 @@ from .models import SystemUser
 
 class SystemUserInLine(admin.StackedInline):
     model = SystemUser
+    raw_id_fields = ['shop']
 
 
 class SystemUserAdmin(UserAdmin):

@@ -1,45 +1,43 @@
 <!DOCTYPE html>
 {% load static %}
-<html lang="en">
+<html lang="ru" class="h-100">
 <head>
     <meta charset="UTF-8">
-    {% block title %}<title>Local Library</title>{% endblock %}
+    <title>{% block title %}Система заявок{% endblock %}</title>
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 <body class="d-flex flex-column h-100">
     {% include 'bid/navbar.html' %}
-    <main class="flex-shrink-0" role="main">
-        <div class="container-fluid" style="margin-top: 2%">
+    <main role="main" class="flex-shrink-0">
+        <div class="container-fluid" style="margin-top: 10px;">
             <div class="row">
-                <div class="col-xl-10 col-md-9">
+                <div class="col-xl-10 col-md-8">
                     {% block content %}{% endblock %}
                 </div>
-                <div class="col-xl-2 col-md-3">
-                    {% block sidebar %}
-{#                        <ul class="nav flex-column">#}
-{#                            <li class="nav-item">#}
-{#                                <a class="nav-link" href="{% url 'index' %}">Home</a>#}
-{#                                <a class="nav-link" href="{% url 'books' %}">All books</a>#}
-{#                                <a class="nav-link" href="{% url 'authors' %}">All authors</a>#}
-{#                            </li>#}
-{#                        </ul>#}
-{#                        {% include 'accounts/sidebar_user.html' %}#}
-                    {% endblock %}
+                <div class="col-xl-2 col-md-4">
+                    {% block sidebar %}{% endblock %}
                 </div>
             </div>
         </div>
     </main>
     <footer class="footer mt-auto py-3 my-5 pt-5 text-muted text-center text-small">
-        <p class="mb-1">© 2019 Library</p>
-        <ul class="list-inline">
-            <li class="list-inline-item"><a href="#">Home</a></li>
-            <li class="list-inline-item"><a href="#">All books</a></li>
-            <li class="list-inline-item"><a href="#">All authors</a></li>
-        </ul>
+        <div class="container">
+            <p class="mb-1">© 2019 ВЦ Белкоопсоюза</p>
+            <ul class="list-inline">
+                <li class="list-inline-item"><a href="{% url 'bid:index' %}">Главная</a></li>
+            </ul>
+        </div>
     </footer>
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
-    </body>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+            integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
+</body>
 </html>

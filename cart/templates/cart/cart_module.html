@@ -1,0 +1,27 @@
+<div class="container-fluid" style="padding: 0;">
+    <h4 class="d-flex justify-content-between align-items-center mb-3">
+        <span class="text-muted">Ваша корзина</span>
+        <span class="badge badge-secondary badge-pill">{{ cart|length }}</span>
+    </h4>
+    <ul class="list-group mb-3">
+        {% for item in cart %}
+            {% with product=item.product %}
+                <li class="list-group-item d-flex justify-content-between lh-condensed">
+                    <h6 class="my-0">{{ product.name }}</h6>
+                    <span class="text-muted">{{ item.quantity }} x {{ item.price }}</span>
+                </li>
+            {% endwith %}
+        {% endfor %}
+        <li class="list-group-item d-flex justify-content-between">
+            <span>Итого (руб)</span>
+            <strong>{{ cart.get_total_price }}</strong>
+        </li>
+    </ul>
+
+    <form class="card p-2">
+        <div class="input-group">
+            <a href="{% url "cart:cart_detail" %}" class="btn btn-secondary btn-block">Посмотреть корзину</a>
+            {#        <a href="{% url "orders:order_create" %}" class="btn btn-secondary btn-block">Оформить чек</a>#}
+        </div>
+    </form>
+</div>

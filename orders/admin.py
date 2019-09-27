@@ -1,3 +1,21 @@
 from django.contrib import admin
+import nested_admin
 
-# Register your models here.
+from .models import Order, OrderItem, Container
+
+
+class ContainerInline(nested_admin.NestedStackedInline):
+    model = Container
+
+
+class OrderItemInline(nested_admin.NestedStackedInline):
+    model = OrderItem
+    raw_id_fields = ['product']
+    inlines = [ContainerInline]
+
+
+@admin.register(Order)
+class OrderAdmin(nested_admin.NestedModelAdmin):
+    list_display = ['id', 'user', 'created', 'assembled', 'shipped', 'get_total_cost']
+    list_filter = ['created', 'assembled', 'shipped']
+    inlines = [OrderItemInline]

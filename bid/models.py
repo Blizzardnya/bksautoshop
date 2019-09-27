@@ -1,9 +1,11 @@
 from django.db import models
+from django.urls import reverse
 
 
 class Unit(models.Model):
     """ Модель меры исчисления """
-    name = models.CharField("Наименование меры исчисления", max_length=30)
+    name = models.CharField("Полное наименование меры исчисления", max_length=30)
+    short_name = models.CharField("Краткое наименование меры исчисления", max_length=10)
 
     class Meta:
         verbose_name = 'Мера исчисления'
@@ -25,14 +27,33 @@ class ProductMatrix(models.Model):
         return self.name
 
 
+class Category(models.Model):
+    """ Модель категории товара """
+    name = models.CharField("Наименование матрицы", max_length=80)
+    slug = models.SlugField("ЧПУ", max_length=150, unique=True, db_index=True)
+    root_category = models.ForeignKey('self', verbose_name='Родительская категория', on_delete=models.CASCADE,
+                                      null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return self.name
+
+    def get_absolute_url(self):
+        return reverse('bid:product_list_by_category', args=[self.slug])
+
+
 class Product(models.Model):
     """ Модель товара """
     barcode = models.CharField("Штрих-код", max_length=13)
     name = models.CharField("Наименование товара", max_length=150, db_index=True)
-    slug = models.SlugField(max_length=150, unique=True, db_index=True)
+    slug = models.SlugField("ЧПУ", max_length=150, unique=True, db_index=True)
     unit = models.ForeignKey(Unit, verbose_name="Мера исчисления", on_delete=models.PROTECT)
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     matrix = models.ManyToManyField(ProductMatrix, verbose_name="Матрица товаров")
+    category = models.ForeignKey(Category, verbose_name='Категория', on_delete=models.PROTECT)
 
     ORDINARY = 'O'
     COOLED = 'C'
@@ -50,7 +71,7 @@ class Product(models.Model):
     updated_at = models.DateTimeField("Дата обновления", auto_now=True)
 
     class Meta:
-        ordering = ('name', )
+        ordering = ('name',)
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
 
@@ -62,11 +83,11 @@ class Organization(models.Model):
     """ Абстрактная модель организации """
     name = models.CharField("Наименование организации", max_length=150, db_index=True)
     UNP = models.CharField("УНП", max_length=10)
-    filial_number = models.CharField("Код филиала", max_length=4, null=True, blank=True)
+    branch_code = models.CharField("Код филиала", max_length=4, null=True, blank=True)
 
     class Meta:
         abstract = True
-        ordering = ('name', )
+        ordering = ('name',)
 
     def __str__(self):
         return self.name
@@ -75,7 +96,7 @@ class Organization(models.Model):
 class Shop(Organization):
     """ Модель торгового объекта """
     address = models.CharField("Адрес", max_length=150)
-    shop_type = models.CharField("Формат объекта", max_length=1)
+    shop_type = models.CharField("Формат объекта", max_length=1, null=True, blank=True)
     product_matrix = models.ForeignKey(ProductMatrix, verbose_name="Матрица товаров", on_delete=models.PROTECT)
 
     class Meta:

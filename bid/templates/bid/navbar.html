@@ -45,10 +45,14 @@
 {#                </li>#}
             </ul>
             {% if request.user.is_authenticated %}
-                <a href="{% url 'logout' %}" class="btn btn-outline-success my-2 my-sm-0">Logout</a>
+                <a href="{% url 'logout' %}" class="btn btn-outline-success my-2 my-sm-0">Выйти</a>
             {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-success my-2 my-sm-0 float-left" >Login</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-success my-2 my-sm-0 float-left" >Войти</a>
             {% endif %}
+            <form class="form-inline">
+                <input class="form-control mr-sm-2" type="search" placeholder="Поиск" aria-label="Search">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Поиск</button>
+            </form>
         </div>
     </nav>
 </header>

@@ -29,7 +29,8 @@ class ProductMatrix(models.Model):
 class Category(models.Model):
     """ Модель категории товара """
     name = models.CharField("Наименование матрицы", max_length=80)
-    root_category = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
+    slug = models.SlugField("ЧПУ", max_length=150, unique=True, db_index=True)
+    root_category = models.ForeignKey('self', verbose_name='Родительская категория', on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         verbose_name = 'Категория'
@@ -43,11 +44,11 @@ class Product(models.Model):
     """ Модель товара """
     barcode = models.CharField("Штрих-код", max_length=13)
     name = models.CharField("Наименование товара", max_length=150, db_index=True)
-    slug = models.SlugField(max_length=150, unique=True, db_index=True)
+    slug = models.SlugField("ЧПУ", max_length=150, unique=True, db_index=True)
     unit = models.ForeignKey(Unit, verbose_name="Мера исчисления", on_delete=models.PROTECT)
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     matrix = models.ManyToManyField(ProductMatrix, verbose_name="Матрица товаров")
-    category = models.ForeignKey(Category, on_delete=models.PROTECT)
+    category = models.ForeignKey(Category, verbose_name='Категория', on_delete=models.PROTECT)
 
     ORDINARY = 'O'
     COOLED = 'C'
@@ -90,7 +91,7 @@ class Organization(models.Model):
 class Shop(Organization):
     """ Модель торгового объекта """
     address = models.CharField("Адрес", max_length=150)
-    shop_type = models.CharField("Формат объекта", max_length=1)
+    shop_type = models.CharField("Формат объекта", max_length=1, null=True, blank=True)
     product_matrix = models.ForeignKey(ProductMatrix, verbose_name="Матрица товаров", on_delete=models.PROTECT)
 
     class Meta:

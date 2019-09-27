@@ -3,7 +3,19 @@
 {% block title %}Система заявок - Главная{% endblock %}
 
 {% block content %}
-    <h1>Bksautoshop Home</h1>
-    <p>Welcome to <em>LocalLibrary</em>, a very basic Django website developed as a tutorial example on the Mozilla Developer Network.</p>
-    <hr>
+    <div class="container-fluid">
+        <h1>Главная страница системы заявок</h1>
+        <h4>Добро пожаловать в систему заявок:</h4>
+        {% if request.user.is_authenticated %}
+            <p>Пользователь - {{ request.user.systemuser }}</p>
+            <p>Торговый объект - {{ request.user.systemuser.shop }}</p>
+        {% else %}
+            <a href="{% url 'login' %}" class="btn btn-outline-success my-2 my-sm-0 float-left" >Войти</a>
+        {% endif %}
+    </div>
+{% endblock %}
+{% block sidebar %}
+    {% if request.user.is_authenticated %}
+        {% include 'cart/cart_module.html' %}
+    {% endif %}
 {% endblock %}

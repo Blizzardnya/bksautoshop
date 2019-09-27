@@ -28,7 +28,7 @@ class Order(models.Model):
         verbose_name_plural = 'Заказы'
 
     def get_total_cost(self):
-        return round(sum(item.get_cost() for item in self.items.all()))
+        return round(sum(item.get_cost() for item in self.items.all()), 2)
 
     def __str__(self):
         return 'Order {}'.format(self.id)
@@ -48,7 +48,7 @@ class OrderItem(models.Model):
         verbose_name_plural = 'Строки заказа'
 
     def get_cost(self):
-        return self.price * self.quantity
+        return round(self.price * self.quantity, 2)
 
     def __str__(self):
         return self.product.name

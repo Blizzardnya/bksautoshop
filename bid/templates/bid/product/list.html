@@ -22,6 +22,7 @@
                             <form action="{% url "cart:cart_add" product.id %}" method="post">
                                 {% csrf_token %}
                                 {{ cart_product_form|crispy }}
+                                <input type="hidden" name="next" value="{{ request.path }}">
                                 <input type="submit" value="Добавить" class="btn btn-success">
                             </form>
                         </div>

@@ -3,21 +3,21 @@ from django.views.decorators.http import require_POST
 from bid.models import Product
 from .cart import Cart
 from .forms import CartAddProductForm
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 
 
 @require_POST
+@permission_required('orders.add_order')
 def cart_add(request, product_id):
+    next_path = request.POST.get('next', '/')
     cart = Cart(request)
     product = get_object_or_404(Product, id=product_id)
     form = CartAddProductForm(request.POST)
     if form.is_valid():
         cd = form.cleaned_data
         cart.add(product=product, quantity=cd['quantity'], update_quantity=cd['update'])
-    # if not category_slug:
-    return redirect('bid:product_list')
-    # else:
-    #     return redirect('bid:product_list_by_category')
+
+    return redirect(next_path)
 
 
 def cart_remove(request, product_id):

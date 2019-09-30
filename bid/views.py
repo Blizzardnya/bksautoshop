@@ -5,6 +5,7 @@ from django.db.models import Q
 from django.contrib.postgres.search import SearchVector
 
 from .models import Category, Product
+from accounts.models import SystemUser
 from .forms import SearchForm
 from cart.forms import CartAddProductForm
 
@@ -15,15 +16,17 @@ def index(request):
 
 @login_required()
 def product_list(request, category_slug=None):
+    sys_user = SystemUser.objects.get(user=request.user)
     category = None
     categories = Category.objects.filter(root_category=None)
-    products_list = Product.objects.all()
+    products_list = Product.objects.filter(matrix=sys_user.shop.product_matrix)
 
     if category_slug:
         category = get_object_or_404(Category, slug=category_slug)
         categories = Category.objects.filter(root_category=category)
         products_list = Product.objects.filter(
-            Q(category=category) | Q(category__in=categories)
+            Q(category=category) | Q(category__in=categories),
+            matrix=sys_user.shop.product_matrix
         )
 
     paginator = Paginator(products_list, 9)

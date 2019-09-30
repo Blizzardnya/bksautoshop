@@ -80,6 +80,11 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
+    def display_matrix(self):
+        return ', '.join([matrix.name for matrix in self.matrix.all()])
+
+    display_matrix.short_description = 'Матрицы'
+
 
 class Organization(models.Model):
     """ Абстрактная модель организации """

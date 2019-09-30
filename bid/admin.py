@@ -15,7 +15,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['barcode', 'name', 'category', 'unit', 'storage_condition', 'price']
+    list_display = ['barcode', 'name', 'category', 'unit', 'storage_condition', 'price', 'display_matrix']
     list_filter = ('storage_condition', 'created_at', 'updated_at')
     list_display_links = ('barcode', 'name')
     search_fields = ['name', 'barcode']

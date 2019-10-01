@@ -29,7 +29,7 @@ def product_list(request, category_slug=None):
             matrix=sys_user.shop.product_matrix
         )
 
-    paginator = Paginator(products_list, 9)
+    paginator = Paginator(products_list, 12)
     page = request.GET.get('page')
     products = paginator.get_page(page)
 

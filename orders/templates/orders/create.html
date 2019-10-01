@@ -1,0 +1,38 @@
+{% extends 'bid/base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %}Оформление заявки{% endblock %}
+
+{% block content %}
+    <div class="col-xl-10 col-md-8">
+        <div class="container-fluid" style="margin-top: 3%">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-warning" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+            <form action="{% url "orders:order_create" %}" method="post">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="user_name">Пользователь</label>
+                    <input id="user_name" class="form-control" type="text"
+                           value="{{ user.first_name }} {{ user.last_name }}" disabled>
+                </div>
+                <div class="form-group">
+                    <label for="user_object">Торговый объект</label>
+                    <input id="user_object" class="form-control" type="text" value="{{ user.systemuser.shop }}"
+                           disabled>
+                </div>
+                <input type="submit" class="btn btn-primary" value="Подтвердить">
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% block sidebar %}
+    <div class="col-xl-2 col-md-4">
+        {% if request.user.is_authenticated %}
+            {% include 'cart/cart_module.html' %}
+        {% endif %}
+    </div>
+{% endblock %}

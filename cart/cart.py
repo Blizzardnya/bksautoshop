@@ -41,7 +41,7 @@ class Cart(object):
         for item in self.cart.values():
             item['price'] = Decimal(item['price'])
             item['quantity'] = Decimal(item['quantity'])
-            item['total_price'] = item['price'] * item['quantity']
+            item['total_price'] = round(item['price'] * item['quantity'], 2)
             yield item
 
     def __len__(self):

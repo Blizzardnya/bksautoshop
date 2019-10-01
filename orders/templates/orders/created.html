@@ -1,0 +1,15 @@
+{% extends 'bid/base.html' %}
+{% load static %}
+{% block title %}Оформление завершено{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {#        <div class="row" style="margin-top: 6%">#}
+        <div class="col-md-8 col-md-offset-2">
+            <h3 class="page-header">Заявка успешно оформлена</h3>
+            <p>Номер заявки: <strong>{{ order.id }}</strong>.</p>
+            <a class="btn btn-primary" href="{% url 'bid:product_list' %}">Перейти к списку продуктов</a>
+        </div>
+        {#        </div>#}
+    </div>
+{% endblock %}

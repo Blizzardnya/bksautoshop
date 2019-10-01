@@ -1,0 +1,42 @@
+{% extends "bid/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% block title %}Система заявок - Поиск{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <h3>Результаты поиска</h3>
+        <div class="row">
+            {% for product in products %}
+                <div class="col-md-4" style="margin-top: 1%">
+                    <div class="text-center img-thumbnail">
+                        {#                                    <a href="{{ product.get_absolute_url }}">#}
+                        {#                                        <img src="{% if product.image %} {{ product.image.url }} {% else %} {% static 'img/default.jpg' %} {% endif %}"#}
+                        {#                                             alt="..." style="height: 200px; width: auto">#}
+                        {#                                    </a>#}
+                        <div class="caption">
+                            <h4 class="text-center">
+                                {#                                            <a href="{{ product.get_absolute_url }}">{{ product.name }}</a>#}
+                                {{ product.name }}
+                            </h4>
+                            <p class="text-center">{{ product.price }} руб. за {{ product.unit.short_name }}</p>
+                            <form action="{% url "cart:cart_add" product.id %}" method="post">
+                                {% csrf_token %}
+                                {{ cart_product_form|crispy }}
+                                <input type="hidden" name="next" value="{{ request.path }}">
+                                <input type="submit" value="Добавить" class="btn btn-success">
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% empty %}
+                <p>Нет записей удовлетворяющих поиску</p>
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+{% block sidebar %}
+    {% if request.user.is_authenticated %}
+        {% include 'cart/cart_module.html' %}
+    {% endif %}
+{% endblock %}

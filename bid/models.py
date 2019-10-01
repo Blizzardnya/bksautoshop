@@ -1,5 +1,6 @@
 from django.db import models
 from django.urls import reverse
+from django.contrib.postgres.indexes import GinIndex
 
 
 class Unit(models.Model):
@@ -29,7 +30,7 @@ class ProductMatrix(models.Model):
 
 class Category(models.Model):
     """ Модель категории товара """
-    name = models.CharField("Наименование матрицы", max_length=80)
+    name = models.CharField("Наименование категории", max_length=80)
     slug = models.SlugField("ЧПУ", max_length=150, unique=True, db_index=True)
     root_category = models.ForeignKey('self', verbose_name='Родительская категория', on_delete=models.CASCADE,
                                       null=True, blank=True)
@@ -47,8 +48,8 @@ class Category(models.Model):
 
 class Product(models.Model):
     """ Модель товара """
-    barcode = models.CharField("Штрих-код", max_length=13)
-    name = models.CharField("Наименование товара", max_length=150, db_index=True)
+    barcode = models.CharField("Штрих-код", max_length=13, unique=True)
+    name = models.CharField("Наименование товара", max_length=150)
     slug = models.SlugField("ЧПУ", max_length=150, unique=True, db_index=True)
     unit = models.ForeignKey(Unit, verbose_name="Мера исчисления", on_delete=models.PROTECT)
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
@@ -74,9 +75,15 @@ class Product(models.Model):
         ordering = ('name',)
         verbose_name = 'Товар'
         verbose_name_plural = 'Товары'
+        indexes = [GinIndex(fields=['barcode', 'name'])]
 
     def __str__(self):
         return self.name
+
+    def display_matrix(self):
+        return ', '.join([matrix.name for matrix in self.matrix.all()])
+
+    display_matrix.short_description = 'Матрицы'
 
 
 class Organization(models.Model):

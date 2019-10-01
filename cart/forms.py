@@ -8,4 +8,4 @@ class CartAddProductForm(forms.Form):
     helper = FormHelper()
     helper.form_show_labels = False
 
-    quantity.widget.attrs.update(step=0.01)
+    # quantity.widget.attrs.update(step=0.01)

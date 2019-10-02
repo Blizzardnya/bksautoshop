@@ -105,14 +105,13 @@
     <div class="col-xl-2 col-md-3">
         <div class="sidebar-module">
             <h4>Категории</h4>
-            <ol class="list-unstyled">
-                <li {% if not category %} class="active"{% endif %}><a href="{% url 'bid:product_list' %}">Все</a></li>
+            <div class="list-group">
+                <a class="list-group-item list-group-item-action {% if not category %} active{% endif %}"
+                   href="{% url 'bid:product_list' %}">Все</a>
                 {% for c in categories %}
-                    <li {% if category.slug == c.slug %} class="active"{% endif %}>
-                        <a href="{{ c.get_absolute_url }}">{{ c.name }}</a>
-                    </li>
+                    <a class="list-group-item list-group-item-action" href="{{ c.get_absolute_url }}">{{ c.name }}</a>
                 {% endfor %}
-            </ol>
+            </div>
         </div>
         {% if request.user.is_authenticated %}
             {% include 'cart/cart_module.html' %}

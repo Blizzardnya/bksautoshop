@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
+from django.views import generic
 
 from .models import Order, OrderItem
 from cart.cart import Cart
@@ -26,3 +28,21 @@ def create_order(request):
         return render(request, 'orders/created.html', context={'order': order})
     else:
         return render(request, 'orders/create.html')
+
+
+class OrderListView(LoginRequiredMixin, generic.ListView):
+    model = Order
+    context_object_name = 'orders'
+    template_name = 'orders/list.html'
+    paginate_by = 12
+
+    def get_queryset(self):
+        """ Все заказы оформленные пользователем """
+        return Order.objects.filter(
+            user=SystemUser.objects.get(user=self.request.user)
+        ).order_by('-created')
+
+
+class OrderView(generic.DetailView):
+    model = Order
+    template_name = 'orders/view.html'

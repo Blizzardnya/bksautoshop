@@ -58,7 +58,7 @@ class OrderItem(models.Model):
 
 class Container(models.Model):
     """ Модель контейнера """
-    order_item = models.ForeignKey(OrderItem, verbose_name="Товар", on_delete=models.CASCADE)
+    order_item = models.ForeignKey(OrderItem, verbose_name="Товар", related_name='containers', on_delete=models.CASCADE)
     number = models.CharField("Номер контейнера", max_length=20)
     quantity = models.DecimalField("Количество", max_digits=10, decimal_places=2)
 

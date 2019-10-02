@@ -1,27 +1,33 @@
 {% extends "bid/base.html" %}
 {% load crispy_forms_tags %}
 {% block content %}
-    <div class="col-md-6">
-    {% if form.errors %}
-        <p>Имя пользователя или пароль введены неправильно. Пожалуйста попробудйте ещё раз.</p>
-    {% endif %}
-
-    {% if next %}
-        {% if user.is_authenticated %}
-            <p>Ваш аккаунт не имеет доступа к данной страницы.</p>
-        {% else %}
-            <p>Пожалйста авторизируйтесь для того что бы видить эту страницу.</p>
+    <div class="container">
+        {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+                Имя пользователя или пароль введены неправильно. Пожалуйста попробудйте ещё раз.
+            </div>
         {% endif %}
-    {% endif %}
 
-    <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        {{ form.username|as_crispy_field }}
-        {{ form.password|as_crispy_field }}
-        <div>
-            <input type="submit" class="btn btn-primary" value="Войти"/>
-            <input type="hidden" name="next" value="{{ next }}"/>
-        </div>
-    </form>
+        {% if next %}
+            {% if user.is_authenticated %}
+                <div class="alert alert-warning" role="alert">
+                    Ваш аккаунт не имеет доступа к данной страницы.
+                </div>
+            {% else %}
+                <div class="alert alert-warning" role="alert">
+                    Пожалйста авторизируйтесь для того что бы видить эту страницу.
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            {{ form.username|as_crispy_field }}
+            {{ form.password|as_crispy_field }}
+            <div>
+                <input type="submit" class="btn btn-primary" value="Войти"/>
+                <input type="hidden" name="next" value="{{ next }}"/>
+            </div>
+        </form>
     </div>
 {% endblock %}

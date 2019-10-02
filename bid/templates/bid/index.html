@@ -4,14 +4,15 @@
 
 {% block content %}
     <div class="col-xl-10 col-md-8">
-        <div class="container-fluid">
-            <h1>Главная страница системы заявок</h1>
-            <h4>Добро пожаловать в систему заявок:</h4>
+        <div class="jumbotron">
+            <h1 class="display-4">Добро пожаловать в систему заявок</h1>
+            <hr class="my-4">
             {% if request.user.is_authenticated %}
                 <p>Пользователь - {{ request.user.systemuser }}</p>
                 <p>Торговый объект - {{ request.user.systemuser.shop }}</p>
             {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-success my-2 my-sm-0 float-left">Войти</a>
+                <a href="{% url 'login' %}" class="btn btn-outline-success my-2 my-sm-0 float-left"
+                   role="button">Войти</a>
             {% endif %}
         </div>
     </div>

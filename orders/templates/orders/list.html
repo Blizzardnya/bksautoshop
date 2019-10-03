@@ -31,6 +31,10 @@
                                     отгрузки: {{ order.shipped|default_if_none:"Нет" }}</li>
                             </ul>
                         </li>
+                        {% if forloop.counter|divisibleby:"6" %}
+                            </ul>
+                            <ul class="list-group col-xl-6 col-md-12">
+                        {% endif %}
                     {% empty %}
                         <li class="list-group-item">
                             <h3 class="text-center">Список заказов пуст.</h3>
@@ -38,6 +42,9 @@
                     {% endfor %}
                 </ul>
             </div>
+            {% with list=orders %}
+                {% include 'bid/paginator.html' %}
+            {% endwith %}
         </div>
     </div>
 {% endblock %}

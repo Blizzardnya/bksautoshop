@@ -42,7 +42,7 @@
             {% else %}
                 <a href="{% url 'login' %}" class="btn btn-outline-success my-2 my-sm-0" style="margin-right: 4px;">Войти</a>
             {% endif %}
-            <form class="form-inline" action="{% url "bid:search_results" %}" method="post">
+            <form class="form-inline" action="{% url "bid:prepare_search" %}" method="post">
                 {% csrf_token %}
                 <input class="form-control mr-sm-2" type="text" name="search_input" placeholder="Поиск"
                        aria-label="Поиск">

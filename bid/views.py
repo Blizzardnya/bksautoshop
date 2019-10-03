@@ -1,6 +1,7 @@
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_POST
 from django.db.models import Q
 from django.contrib.postgres.search import SearchVector
 
@@ -11,11 +12,13 @@ from cart.forms import CartAddProductForm
 
 
 def index(request):
+    """ Главная страница приложения """
     return render(request, 'bid/index.html')
 
 
 @login_required()
 def product_list(request, category_slug=None):
+    """ Просмотр списка товаров """
     sys_user = SystemUser.objects.get(user=request.user)
     category = None
     categories = Category.objects.filter(root_category=None)
@@ -44,14 +47,33 @@ def product_list(request, category_slug=None):
 
 
 @login_required()
-def search_results(request):
+@require_POST
+def prepare_search(request):
+    """ Получение и обработка клшючевого слова для поиска """
+    # search_products = request.session.get('products', None)
     search_products = None
+
     form = SearchForm(request.POST)
     if form.is_valid():
-        search_products = Product.objects.annotate(search=SearchVector('barcode', 'name')).filter(
-            search=form.cleaned_data['search_input'])
+        # search_products = Product.objects.annotate(search=SearchVector('barcode', 'name')).filter(
+        #     search=form.cleaned_data['search_input'])
+        search_products = form.cleaned_data['search_input']
+
+    # context = {
+    #     'products': search_products,
+    #     'cart_product_form': CartAddProductForm()
+    # }
+    #
+    # return render(request, 'bid/search.html', context)
+    return redirect('bid:search_results', word=search_products)
+
+
+def search_results(request, word):
+    """ Поиск товаров по ключевому слову"""
+    search_products = Product.objects.annotate(search=SearchVector('barcode', 'name')).filter(search=word)
 
     context = {
+        'key_word': word,
         'products': search_products,
         'cart_product_form': CartAddProductForm()
     }

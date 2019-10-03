@@ -8,33 +8,11 @@
         <div class="container-fluid">
             <div class="row">
                 {% for product in products %}
-                    {#                <div class="col-md-4" style="margin-top: 1%">#}
-                    {#                    <div class="text-center img-thumbnail">#}
-                    {#                        <div class="caption">#}
-                    {#                            <h4 class="text-center">#}
-                    {#                                {{ product.name }}#}
-                    {#                            </h4>#}
-                    {#                            <p class="text-center">{{ product.price }} руб. за {{ product.unit.short_name }}</p>#}
-                    {#                            <form action="{% url "cart:cart_add" product.id %}" method="post">#}
-                    {#                                {% csrf_token %}#}
-                    {#                                {{ cart_product_form|crispy }}#}
-                    {#                                <input type="hidden" name="next" value="{{ request.path }}">#}
-                    {#                                <input type="submit" value="Добавить" class="btn btn-success">#}
-                    {#                            </form>#}
-                    {#                        </div>#}
-                    {#                    </div>#}
-                    {#                </div>#}
                     <div class="col-xl-3 col-md-4" style="padding: 0 5px 0 5px;">
                         <div class="card" style="margin-top: 2%">
                             <div class="card-body">
                                 <h6 class="card-title text-center">{{ product.name }}</h6>
-                                {#                        <h6 class="card-subtitle mb-2 text-muted">Цена за {{ product.unit.short_name }}</h6>#}
                                 <p class="card-text">Цена {{ product.price }} руб., за {{ product.unit.short_name }}</p>
-                                {#                    </div>#}
-                                {#                        <ul class="list-group list-group-flush">#}
-                                {#                            <li class="list-group-item">Цена {{ product.price }} руб., за {{ product.unit.short_name }}</li>#}
-                                {#                        </ul>#}
-                                {#                    <div class="card-body">#}
                                 <form action="{% url "cart:cart_add" product.id %}" method="post">
                                     {% csrf_token %}
                                     {{ cart_product_form|crispy }}
@@ -48,56 +26,9 @@
                     <p>В справочнике товаров нет записей</p>
                 {% endfor %}
             </div>
-            {% if products.has_other_pages %}
-                <nav aria-label="Products page navigation" style="margin-top: 1%">
-                    <ul class="pagination justify-content-center">
-                        {% if products.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1">&laquo; Первая</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ products.previous_page_number }}" tabindex="-1"
-                                   aria-disabled="true">Предыдущая</a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#">&laquo; Первая</a>
-                            </li>
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Предыдущая</a>
-                            </li>
-                        {% endif %}
-                        {% for i in products.paginator.page_range %}
-                            {% if products.number == i %}
-                                <li class="page-item active">
-                                    <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                                </li>
-                            {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ i }}">{{ i }}</a>
-                                </li>
-                            {% endif %}
-                        {% empty %}
-                        {% endfor %}
-                        {% if products.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ products.next_page_number }}">Следующая</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ products.paginator.num_pages }}">Последняя
-                                    &raquo;</a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#">Следующая</a>
-                            </li>
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#">Последняя &raquo;</a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            {% endif %}
+            {% with list=products %}
+                {% include 'bid/paginator.html' %}
+            {% endwith %}
         </div><!-- /.container -->
     </div>
 {% endblock %}

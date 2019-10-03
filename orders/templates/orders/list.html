@@ -38,6 +38,9 @@
                     {% endfor %}
                 </ul>
             </div>
+            {% with list=orders %}
+                {% include 'bid/paginator.html' %}
+            {% endwith %}
         </div>
     </div>
 {% endblock %}

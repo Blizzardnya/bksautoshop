@@ -13,6 +13,12 @@ class Cart(object):
         self.cart = cart
 
     def add(self, product, quantity=1, update_quantity=False):
+        """
+        Метод добавления товара в корзину
+        :param product: Товар
+        :param quantity: Количество
+        :param update_quantity: Признак обновления
+        """
         product_id = str(product.id)
         if product_id not in self.cart:
             self.cart[product_id] = {'quantity': str(Decimal(0.0)), 'price': str(product.price)}
@@ -23,10 +29,15 @@ class Cart(object):
         self.save()
 
     def save(self):
+        """ Метод сохранения корзины в сессии """
         self.session[settings.CART_SESSION_ID] = self.cart
         self.session.modified = True
 
     def remove(self, product):
+        """
+        Метод удаление товара из корзины
+        :param product: Товар
+        """
         product_id = str(product.id)
         if product_id in self.cart:
             del self.cart[product_id]
@@ -48,8 +59,11 @@ class Cart(object):
         return len(self.cart.values())
 
     def get_total_price(self):
+        """ Метод рассчёта итого по корзине """
         return round(sum(Decimal(item['price']) * Decimal(item['quantity']) for item in self.cart.values()), 2)
 
     def clear(self):
+        """
+        Метод удаления корзины из сессии """
         del self.session[settings.CART_SESSION_ID]
         self.session.modified = True

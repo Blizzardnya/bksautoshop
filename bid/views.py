@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.contrib.postgres.search import SearchVector
 
 from .models import Category, Product
+from orders.models import Order
 from accounts.models import SystemUser
 from .forms import SearchForm
 from cart.forms import CartAddProductForm
@@ -13,7 +14,14 @@ from cart.forms import CartAddProductForm
 
 def index(request):
     """ Главная страница приложения """
-    return render(request, 'bid/index.html')
+    last_order = None
+    if request.user.is_authenticated:
+        try:
+            last_order = Order.objects.filter(user=SystemUser.objects.get(user=request.user)).order_by('-created')[0]
+        except IndexError:
+            pass
+
+    return render(request, 'bid/index.html', {'last_order': last_order})
 
 
 @login_required()

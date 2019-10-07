@@ -7,7 +7,7 @@ from django.contrib.postgres.search import SearchVector
 
 from .models import Category, Product
 from orders.models import Order
-from accounts.models import SystemUser
+from accounts.models import ShopUser
 from .forms import SearchForm
 from cart.forms import CartAddProductForm
 
@@ -17,7 +17,7 @@ def index(request):
     last_order = None
     if request.user.is_authenticated:
         try:
-            last_order = Order.objects.filter(user=SystemUser.objects.get(user=request.user)).order_by('-created')[0]
+            last_order = Order.objects.filter(user=ShopUser.objects.get(user=request.user)).order_by('-created')[0]
         except IndexError:
             pass
 
@@ -27,7 +27,7 @@ def index(request):
 @login_required()
 def product_list(request, category_slug=None):
     """ Просмотр списка товаров """
-    sys_user = SystemUser.objects.get(user=request.user)
+    sys_user = ShopUser.objects.get(user=request.user)
     category = None
     categories = Category.objects.filter(root_category=None)
     products_list = Product.objects.filter(matrix=sys_user.shop.product_matrix)

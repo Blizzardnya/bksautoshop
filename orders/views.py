@@ -6,7 +6,7 @@ from django.views import generic
 
 from .models import Order, OrderItem
 from cart.cart import Cart
-from accounts.models import SystemUser
+from accounts.models import ShopUser
 
 
 @login_required()
@@ -14,12 +14,12 @@ from accounts.models import SystemUser
 def create_order(request):
     """ Создание заявки """
     cart = Cart(request)
-    scser = SystemUser.objects.get(user=request.user)
+    shop_user = ShopUser.objects.get(user=request.user)
     if request.method == 'POST':
         if len(cart) == 0:
             messages.add_message(request, 40, 'Ваша корзина пуста.')
             return render(request, 'orders/create.html')
-        order = Order.objects.create(user=scser)
+        order = Order.objects.create(user=shop_user)
 
         for item in cart:
             OrderItem.objects.create(order=order,
@@ -42,7 +42,7 @@ class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListVie
 
     def get_queryset(self):
         return Order.objects.filter(
-            user=SystemUser.objects.get(user=self.request.user)
+            user=ShopUser.objects.get(user=self.request.user)
         ).order_by('-created')
 
 

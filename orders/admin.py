@@ -16,7 +16,6 @@ class OrderItemInline(nested_admin.NestedStackedInline):
     extra = 2
 
 
-
 @admin.register(Order)
 class OrderAdmin(nested_admin.NestedModelAdmin):
     list_display = ['id', 'user', 'created', 'assembled', 'shipped', 'get_total_cost']

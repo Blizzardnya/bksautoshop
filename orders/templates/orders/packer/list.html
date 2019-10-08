@@ -1,10 +1,9 @@
 {% extends "bid/base.html" %}
 
-{% block title %}Заказы пользователя{% endblock %}
+{% block title %}Весовой товар{% endblock %}
 
 {% block content %}
-    <div class="col-xl-10 col-md-8">
-        <div class="container-fluid" style="margin-top: 1%">
+        <div class="container" style="margin-top: 1%">
             <div class="row">
                 <ul class="list-group col-xl-6 col-md-12">
                     {% for order in orders %}
@@ -16,19 +15,21 @@
                                 <h4>
                                     <span class="badge
                                         {% if order.status == 'N' %} badge-primary
-                                        {% elif order.status == 'A' %} badge-warning
+                                        {% elif order.status == 'P' %} badge-warning
+                                        {% elif order.status == 'A' %} badge-info
                                         {% else %} badge-success
                                         {% endif %} float-right">
                                         {{ order.get_status_display }}
                                     </span>
                                 </h4>
                             </div>
+                            <p>Торговый объект: {{ order.user.shop }}</p>
+                            <p>Дата создания: {{ order.created }}</p>
+
                             <ul class="list-group">
-                                <li class="list-group-item">Дата создания: {{ order.created }}</li>
-                                <li class="list-group-item">Дата
-                                    комплектровки: {{ order.assembled|default_if_none:"Нет" }}</li>
-                                <li class="list-group-item">Дата
-                                    отгрузки: {{ order.shipped|default_if_none:"Нет" }}</li>
+                                {% for item in order.get_items_for_packer %}
+                                    <li class="list-group-item">{{ item.product }} - {{ item.price }} x {{ item.quantity }} {{ item.product.unit.short_name }}</li>
+                                {% endfor %}
                             </ul>
                         </li>
                         {% if forloop.counter|divisibleby:"6" %}
@@ -46,12 +47,4 @@
                 {% include 'bid/paginator.html' %}
             {% endwith %}
         </div>
-    </div>
-{% endblock %}
-{% block sidebar %}
-    <div class="col-xl-2 col-md-4">
-        {% if request.user.is_authenticated %}
-            {% include 'cart/cart_module.html' %}
-        {% endif %}
-    </div>
 {% endblock %}

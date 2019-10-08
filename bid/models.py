@@ -86,6 +86,30 @@ class Product(models.Model):
     display_matrix.short_description = 'Матрицы'
 
 
+class Stock(models.Model):
+    """ Модель склада """
+    name = models.CharField("Наименование склада", max_length=100)
+
+    ORDINARY = 'O'
+    COOLED = 'C'
+    FROZEN = 'F'
+
+    STOCK_TYPE = (
+        (ORDINARY, 'Обычный'),
+        (COOLED, 'Склад-холодильник'),
+        (FROZEN, 'Склад-морозильник'),
+    )
+
+    stock_type = models.CharField("Формат объекта", max_length=1, choices=STOCK_TYPE, default=ORDINARY)
+
+    class Meta:
+        verbose_name = 'Склад'
+        verbose_name_plural = 'Склады'
+
+    def __str__(self):
+        return self.name
+
+
 class Organization(models.Model):
     """ Абстрактная модель организации """
     name = models.CharField("Наименование организации", max_length=150, db_index=True)
@@ -103,8 +127,8 @@ class Organization(models.Model):
 class Shop(Organization):
     """ Модель торгового объекта """
     address = models.CharField("Адрес", max_length=150)
-    shop_type = models.CharField("Формат объекта", max_length=1, null=True, blank=True)
     product_matrix = models.ForeignKey(ProductMatrix, verbose_name="Матрица товаров", on_delete=models.PROTECT)
+    stock = models.ForeignKey(Stock, verbose_name="Склад", on_delete=models.PROTECT)
 
     class Meta:
         verbose_name = 'Торговый объект'

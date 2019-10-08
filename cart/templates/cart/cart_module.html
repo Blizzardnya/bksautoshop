@@ -3,15 +3,24 @@
         <span class="text-muted">Ваша корзина</span>
         <span class="badge badge-secondary badge-pill">{{ cart|length }}</span>
     </h4>
-    <ul class="list-group mb-3">
+    <ul class="list-group mb-3 ">
         {% for item in cart %}
             {% with product=item.product %}
-                <li class="list-group-item d-flex justify-content-between lh-condensed">
-                    <h6 class="my-0">{{ product.name }}</h6>
-                    <span class="text-muted">{{ item.quantity }} x {{ item.price }}</span>
-                </li>
+                {% if forloop.counter <= 6 %}
+                    <li class="list-group-item d-flex justify-content-between lh-condensed">
+                        <h6 class="my-0">{{ product.name }}</h6>
+                        <span class="text-muted">{{ item.quantity }} x {{ item.price }}</span>
+                    </li>
+                {% endif %}
             {% endwith %}
         {% endfor %}
+        {% if cart|length > 6 %}
+            {% with sub_count=cart|length|add:"-6" %}
+                <li class="list-group-item text-center">
+                    <span class=""> +{{ sub_count }}</span>
+                </li>
+            {% endwith %}
+        {% endif %}
         <li class="list-group-item d-flex justify-content-between">
             <span>Итого (руб)</span>
             <strong>{{ cart.get_total_price }}</strong>

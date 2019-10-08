@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Product, ProductMatrix, Category, Shop, Provider, Unit
+from .models import Product, ProductMatrix, Category, Shop, Provider, Unit, Stock
 
 
 @admin.register(Category)
@@ -23,12 +23,21 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
 
 
+@admin.register(Stock)
+class StockAdmin(admin.ModelAdmin):
+    list_display = ['name', 'stock_type']
+    list_filter = ('stock_type',)
+    list_display_links = ('name',)
+    search_fields = ['name']
+
+
 @admin.register(Shop)
 class ShopAdmin(admin.ModelAdmin):
-    list_display = ['name', 'UNP', 'branch_code', 'shop_type', 'product_matrix']
-    list_filter = ('shop_type', 'product_matrix')
+    list_display = ['name', 'UNP', 'branch_code', 'product_matrix', 'stock']
+    list_filter = ('product_matrix',)
     list_display_links = ('name',)
     search_fields = ['name', 'UNP', 'branch_code']
+    raw_id_fields = ['stock']
 
 
 @admin.register(Provider)

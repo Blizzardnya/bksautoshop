@@ -1,21 +1,23 @@
 from django.db import models
-from accounts.models import SystemUser
+from accounts.models import ShopUser
 from bid.models import Product
 
 
 class Order(models.Model):
     """ Модель заказа """
-    user = models.ForeignKey(SystemUser, verbose_name="Пользователь", on_delete=models.CASCADE)
+    user = models.ForeignKey(ShopUser, verbose_name="Пользователь", on_delete=models.CASCADE)
     created = models.DateTimeField("Дата создания", auto_now_add=True)
     assembled = models.DateTimeField("Дата комплектовки", null=True, blank=True)
     shipped = models.DateTimeField("Дата отгрузки", null=True, blank=True)
 
     NEW = 'N'
+    PROCESSED = 'P'
     ASSEMBLED = 'A'
     SHIPPED = 'S'
 
     ORDER_STATUS = (
         (NEW, 'Новый'),
+        (PROCESSED, 'Обработан'),
         (ASSEMBLED, 'Укомплектован'),
         (SHIPPED, 'Отправлен'),
     )
@@ -29,6 +31,9 @@ class Order(models.Model):
 
     def get_total_cost(self):
         return round(sum(item.get_cost() for item in self.items.all()), 2)
+
+    def get_items_for_packer(self):
+        return self.items.filter(product__unit__name='Килограмм')
 
     def __str__(self):
         return 'Order {}'.format(self.id)

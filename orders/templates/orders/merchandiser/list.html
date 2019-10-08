@@ -1,0 +1,58 @@
+{% extends "bid/base.html" %}
+
+{% block title %}Заказы пользователя{% endblock %}
+
+{% block content %}
+    <div class="col-xl-10 col-md-8">
+        <div class="container-fluid" style="margin-top: 1%">
+            <div class="row">
+                <ul class="list-group col-xl-6 col-md-12">
+                    {% for order in orders %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a class="h4" href="{% url 'orders:view_order' order.id %}" role="button">
+                                    Заявка №{{ order.id }} - Итого: {{ order.get_total_cost }}
+                                </a>
+                                <h4>
+                                    <span class="badge
+                                        {% if order.status == 'N' %} badge-primary
+                                        {% elif order.status == 'P' %} badge-warning
+                                        {% elif order.status == 'A' %} badge-info
+                                        {% else %} badge-success
+                                        {% endif %} float-right">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </h4>
+                            </div>
+                            <ul class="list-group">
+                                <li class="list-group-item">Дата создания: {{ order.created }}</li>
+                                <li class="list-group-item">Дата
+                                    комплектровки: {{ order.assembled|default_if_none:"Нет" }}</li>
+                                <li class="list-group-item">Дата
+                                    отгрузки: {{ order.shipped|default_if_none:"Нет" }}</li>
+                            </ul>
+                        </li>
+                        {% if forloop.counter|divisibleby:"6" %}
+                            </ul>
+                            <ul class="list-group col-xl-6 col-md-12">
+                        {% endif %}
+                    {% empty %}
+                        <li class="list-group-item">
+                            <h3 class="text-center">Список заказов пуст.</h3>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% with list=orders %}
+                {% include 'bid/paginator.html' %}
+            {% endwith %}
+        </div>
+    </div>
+{% endblock %}
+{% block sidebar %}
+    <div class="col-xl-2 col-md-4">
+        {% if request.user.is_authenticated %}
+            {% include 'cart/cart_module.html' %}
+        {% endif %}
+    </div>
+{% endblock %}

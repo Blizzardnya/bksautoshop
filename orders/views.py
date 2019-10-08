@@ -1,3 +1,5 @@
+import datetime
+
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -18,7 +20,7 @@ def create_order(request):
     if request.method == 'POST':
         if len(cart) == 0:
             messages.add_message(request, 40, 'Ваша корзина пуста.')
-            return render(request, 'orders/create.html')
+            return render(request, 'orders/merchandiser/create.html')
         order = Order.objects.create(user=shop_user)
 
         for item in cart:
@@ -27,16 +29,16 @@ def create_order(request):
                                      price=item['price'],
                                      quantity=item['quantity'])
         cart.clear()
-        return render(request, 'orders/created.html', context={'order': order})
+        return render(request, 'orders/merchandiser/created.html', context={'order': order})
     else:
-        return render(request, 'orders/create.html')
+        return render(request, 'orders/merchandiser/create.html')
 
 
 class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):
     """ Просмотр списка заявок пользователя """
     model = Order
     context_object_name = 'orders'
-    template_name = 'orders/list.html'
+    template_name = 'orders/merchandiser/list.html'
     paginate_by = 12
     permission_required = 'orders.view_order'
 
@@ -49,5 +51,13 @@ class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListVie
 class OrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
     """ Просмотр заявки пользователя """
     model = Order
-    template_name = 'orders/view.html'
+    template_name = 'orders/merchandiser/view.html'
     permission_required = 'orders.view_order'
+
+
+@permission_required('accounts.is_packer')
+def packer_product_list(request):
+    orders = Order.objects.filter(status=Order.PROCESSED,
+                                  created__lte=datetime.datetime.strptime(datetime.date.today().strftime("%Y-%m-%d 14:00:00"),
+                                                                          "%Y-%m-%d %H:%M:%S"))
+    return render(request, 'orders/packer/list.html', {'orders': orders})

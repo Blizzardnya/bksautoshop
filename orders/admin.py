@@ -18,6 +18,7 @@ class OrderItemInline(nested_admin.NestedStackedInline):
 
 @admin.register(Order)
 class OrderAdmin(nested_admin.NestedModelAdmin):
-    list_display = ['id', 'user', 'created', 'assembled', 'shipped', 'get_total_cost']
-    list_filter = ['created', 'assembled', 'shipped']
+    list_display = ['id', 'status', 'user', 'created', 'assembled', 'shipped', 'get_total_cost']
+    list_filter = ['status', 'created', 'assembled', 'shipped']
+    list_editable = ['status']
     inlines = [OrderItemInline]

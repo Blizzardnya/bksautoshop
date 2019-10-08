@@ -17,7 +17,7 @@ class Order(models.Model):
 
     ORDER_STATUS = (
         (NEW, 'Новый'),
-        (PROCESSED, 'Обработанный'),
+        (PROCESSED, 'Обработан'),
         (ASSEMBLED, 'Укомплектован'),
         (SHIPPED, 'Отправлен'),
     )
@@ -31,6 +31,9 @@ class Order(models.Model):
 
     def get_total_cost(self):
         return round(sum(item.get_cost() for item in self.items.all()), 2)
+
+    def get_items_for_packer(self):
+        return self.items.filter(product__unit__name='Килограмм')
 
     def __str__(self):
         return 'Order {}'.format(self.id)

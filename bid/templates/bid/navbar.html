@@ -26,6 +26,11 @@
                             <a class="nav-link" href="{% url 'orders:list_orders' %}">Список заявок</a>
                         </li>
                     {% endif %}
+                    {% if perms.accounts.is_packer %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'orders:packer_list_orders' %}">Весовой товар по заявкам</a>
+                        </li>
+                    {% endif %}
                 {% endif %}
                 {#                <li class="nav-item dropdown">#}
                 {#                    <a class="nav-link dropdown-toggle" href="#" id="AuthorDropdownMenuLink" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">#}

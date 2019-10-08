@@ -16,7 +16,8 @@
                                 <h4>
                                     <span class="badge
                                         {% if order.status == 'N' %} badge-primary
-                                        {% elif order.status == 'A' %} badge-warning
+                                        {% elif order.status == 'P' %} badge-warning
+                                        {% elif order.status == 'A' %} badge-info
                                         {% else %} badge-success
                                         {% endif %} float-right">
                                         {{ order.get_status_display }}

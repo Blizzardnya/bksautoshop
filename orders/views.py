@@ -1,10 +1,15 @@
-import datetime
+try:
+    from bksautoshop.local_settings import BID_TIME
+except (ImportError, ModuleNotFoundError):
+    from bksautoshop.prod_settings import BID_TIME
 
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.views import generic
+from django.utils import timezone
+from django.core.paginator import Paginator
 
 from .models import Order, OrderItem
 from cart.cart import Cart
@@ -55,9 +60,16 @@ class OrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView)
     permission_required = 'orders.view_order'
 
 
+@login_required()
 @permission_required('accounts.is_packer')
 def packer_product_list(request):
-    orders = Order.objects.filter(status=Order.PROCESSED,
-                                  created__lte=datetime.datetime.strptime(datetime.date.today().strftime("%Y-%m-%d 14:00:00"),
-                                                                          "%Y-%m-%d %H:%M:%S"))
+    today = timezone.now()
+    date = timezone.datetime(today.year, today.month, today.day, BID_TIME.get('hour'), BID_TIME.get('minute'),
+                             BID_TIME.get('second'), BID_TIME.get('millisecond'), timezone.get_current_timezone())
+    orders_list = Order.objects.filter(status=Order.PROCESSED, created__lte=date)
+
+    paginator = Paginator(orders_list, 12)
+    page = request.GET.get('page')
+    orders = paginator.get_page(page)
+
     return render(request, 'orders/packer/list.html', {'orders': orders})

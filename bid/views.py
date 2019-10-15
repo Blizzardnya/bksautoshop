@@ -10,7 +10,8 @@ from .models import Category, Product
 from orders.models import Order
 from accounts.models import ShopUser
 from .forms import SearchForm
-from cart.forms import CartAddProductForm
+# from cart.forms import CartAddProductForm
+from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
 
 
 def index(request):
@@ -51,7 +52,9 @@ def product_list(request, category_slug=None):
         'category': category,
         'categories': categories,
         'products': products,
-        'cart_product_form': CartAddProductForm()
+        # 'cart_product_form': CartAddProductForm()
+        'cart_weight_product_form': CartAddWeightProductForm(),
+        'cart_piece_product_form': CartAddPieceProductForm(),
     }
 
     return render(request, 'bid/product/list.html', context)
@@ -89,7 +92,9 @@ def search_results(request, word):
     context = {
         'key_word': word,
         'products': search_products,
-        'cart_product_form': CartAddProductForm()
+        # 'cart_product_form': CartAddProductForm()
+        'cart_weight_product_form': CartAddWeightProductForm(),
+        'cart_piece_product_form': CartAddPieceProductForm(),
     }
 
     return render(request, 'bid/search.html', context)

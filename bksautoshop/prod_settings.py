@@ -21,3 +21,10 @@ DATABASES = {
         'PORT': '5432'
     }
 }
+
+BID_TIME = {
+    'hour': 14,
+    'minute': 0,
+    'second': 0,
+    'millisecond': 0
+}

@@ -49,8 +49,9 @@ class ProviderAdmin(admin.ModelAdmin):
 
 @admin.register(Unit)
 class UnitAdmin(admin.ModelAdmin):
-    list_display = ['name', 'short_name']
+    list_display = ['name', 'short_name', 'type']
     list_display_links = ('name',)
+    list_editable = ['type']
     search_fields = ['name']
 
 

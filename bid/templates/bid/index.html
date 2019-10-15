@@ -33,9 +33,9 @@
                                     </a>
                                     <h4>
                                         <span class="badge
-                                            {% if order.status == 'N' %} badge-primary
-                                            {% elif order.status == 'P' %} badge-warning
-                                            {% elif order.status == 'A' %} badge-info
+                                            {% if last_order.status == 'N' %} badge-primary
+                                            {% elif last_order.status == 'P' %} badge-warning
+                                            {% elif last_order.status == 'A' %} badge-info
                                             {% else %} badge-success
                                             {% endif %} float-right">
                                             {{ last_order.get_status_display }}

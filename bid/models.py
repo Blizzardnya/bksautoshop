@@ -8,12 +8,25 @@ class Unit(models.Model):
     name = models.CharField("Полное наименование меры исчисления", max_length=30)
     short_name = models.CharField("Краткое наименование меры исчисления", max_length=10)
 
+    WEIGHT = 'W'
+    PIECE = 'P'
+
+    UNIT_TYPES = (
+        (WEIGHT, 'Весовой'),
+        (PIECE, 'Штучный'),
+    )
+
+    type = models.CharField("Тип единицы измерения", max_length=1, choices=UNIT_TYPES, default=PIECE)
+
     class Meta:
         verbose_name = 'Мера исчисления'
         verbose_name_plural = 'Меры исчисления'
 
     def __str__(self):
         return self.name
+
+    def is_weight_type(self):
+        return True if self.type == self.WEIGHT else False
 
 
 class ProductMatrix(models.Model):

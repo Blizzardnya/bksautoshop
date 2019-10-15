@@ -3,7 +3,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from bid.models import Product
 from .cart import Cart
-from .forms import CartAddProductForm
+# from .forms import CartAddProductForm
+from .forms import CartAddWeightProductForm, CartAddPieceProductForm
 from django.contrib.auth.decorators import login_required, permission_required
 
 
@@ -14,7 +15,11 @@ def cart_add(request, product_id):
     # next_path = request.POST.get('next', '/')
     cart = Cart(request)
     product = get_object_or_404(Product, id=product_id)
-    form = CartAddProductForm(request.POST)
+    if product.unit.is_weight_type:
+        form = CartAddWeightProductForm(request.POST)
+    else:
+        form = CartAddPieceProductForm(request.POST)
+    # form = CartAddProductForm(request.POST)
     if form.is_valid():
         cd = form.cleaned_data
         cart.add(product=product, quantity=cd['quantity'], update_quantity=cd['update'])
@@ -43,5 +48,11 @@ def cart_detail(request):
     """ Просмотр корзины """
     cart = Cart(request)
     for item in cart:
-        item['update_quantity_form'] = CartAddProductForm(initial={'quantity': item['quantity'], 'update': True})
+        if item.get('product').unit.is_weight_type():
+            item['update_quantity_form'] = CartAddWeightProductForm(initial={'quantity': item['quantity'],
+                                                                             'update': True})
+        else:
+            item['update_quantity_form'] = CartAddPieceProductForm(initial={'quantity': item['quantity'],
+                                                                             'update': True})
+        # item['update_quantity_form'] = CartAddProductForm(initial={'quantity': item['quantity'], 'update': True})
     return render(request, 'cart/detail.html', {'cart': cart})

@@ -10,10 +10,12 @@ from django.contrib import messages
 from django.views import generic
 from django.utils import timezone
 from django.core.paginator import Paginator
+from django.db.models import Count, Q
 
 from .models import Order, OrderItem
 from cart.cart import Cart
 from accounts.models import ShopUser
+from bid.models import Unit
 
 
 @login_required()
@@ -45,7 +47,7 @@ class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListVie
     context_object_name = 'orders'
     template_name = 'orders/merchandiser/list.html'
     paginate_by = 12
-    permission_required = 'orders.view_order'
+    permission_required = 'accounts.is_merchandiser'
 
     def get_queryset(self):
         return Order.objects.filter(
@@ -66,7 +68,11 @@ def packer_product_list(request):
     today = timezone.now()
     date = timezone.datetime(today.year, today.month, today.day, BID_TIME.get('hour'), BID_TIME.get('minute'),
                              BID_TIME.get('second'), BID_TIME.get('millisecond'), timezone.get_current_timezone())
-    orders_list = Order.objects.filter(status=Order.PROCESSED, created__lte=date)
+
+    weight_units = Unit.objects.filter(type=Unit.WEIGHT)
+    items = Count('items', filter=Q(items__product__unit__in=weight_units))
+    orders_list = Order.objects.annotate(items_count=items).filter(status=Order.PROCESSED, created__lte=date,
+                                                                   items_count__gt=0)
 
     paginator = Paginator(orders_list, 12)
     page = request.GET.get('page')

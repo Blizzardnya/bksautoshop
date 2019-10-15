@@ -1,6 +1,6 @@
 from django.db import models
 from accounts.models import ShopUser
-from bid.models import Product
+from bid.models import Product, Unit
 
 
 class Order(models.Model):
@@ -33,7 +33,8 @@ class Order(models.Model):
         return round(sum(item.get_cost() for item in self.items.all()), 2)
 
     def get_items_for_packer(self):
-        return self.items.filter(product__unit__name='Килограмм')
+        weight_units = Unit.objects.filter(type=Unit.WEIGHT)
+        return self.items.filter(product__unit__in=weight_units)
 
     def __str__(self):
         return 'Order {}'.format(self.id)

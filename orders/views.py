@@ -41,7 +41,7 @@ def create_order(request):
         return render(request, 'orders/merchandiser/create.html')
 
 
-class OrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):
+class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):
     """ Просмотр списка заявок пользователя """
     model = Order
     context_object_name = 'orders'
@@ -79,3 +79,21 @@ def packer_product_list(request):
     orders = paginator.get_page(page)
 
     return render(request, 'orders/packer/list.html', {'orders': orders})
+
+
+class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):
+    """ Просмотр списка заявок пользователя """
+    model = Order
+    context_object_name = 'orders'
+    template_name = 'orders/sorter/list.html'
+    paginate_by = 12
+    permission_required = 'accounts.is_sorter'
+
+    def get_queryset(self):
+        today = timezone.now()
+        date = timezone.datetime(today.year, today.month, today.day, BID_TIME.get('hour'), BID_TIME.get('minute'),
+                                 BID_TIME.get('second'), BID_TIME.get('millisecond'), timezone.get_current_timezone())
+
+        return Order.objects.filter(
+            status=Order.PROCESSED, created__lte=date
+        ).order_by('-created')

@@ -23,12 +23,17 @@
                             <a class="nav-link" href="{% url 'bid:product_list' %}">Товары</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'orders:list_orders' %}">Список заявок</a>
+                            <a class="nav-link" href="{% url 'orders:merchandiser_list_orders' %}">Список заявок</a>
                         </li>
                     {% endif %}
                     {% if perms.accounts.is_packer %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'orders:packer_list_orders' %}">Весовой товар по заявкам</a>
+                        </li>
+                    {% endif %}
+                    {% if perms.accounts.is_sorter %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'orders:sorter_list_orders' %}">Список заявок</a>
                         </li>
                     {% endif %}
                 {% endif %}

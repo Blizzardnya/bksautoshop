@@ -22,6 +22,13 @@ class Order(models.Model):
         (SHIPPED, 'Отправлен'),
     )
 
+    STATUS_COLORS = {
+        NEW: 'primary',
+        PROCESSED: 'warning',
+        ASSEMBLED: 'info',
+        SHIPPED: 'success'
+    }
+
     status = models.CharField("Статус", max_length=1, choices=ORDER_STATUS, default=NEW)
 
     class Meta:
@@ -35,6 +42,9 @@ class Order(models.Model):
     def get_items_for_packer(self):
         weight_units = Unit.objects.filter(type=Unit.WEIGHT)
         return self.items.filter(product__unit__in=weight_units)
+
+    def get_status_color(self):
+        return self.STATUS_COLORS.get(self.status)
 
     def __str__(self):
         return 'Order {}'.format(self.id)

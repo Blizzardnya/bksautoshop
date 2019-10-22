@@ -25,6 +25,15 @@
                             <li class="list-group-item">Дата
                                 отгрузки: {{ order.shipped|default_if_none:"Нет" }}</li>
                         </ul>
+                        <button class="btn btn-primary" type="button" data-toggle="collapse"
+                                data-target="#collapse-{{ order.id }}" aria-expanded="false"
+                                aria-controls="#collapse-{{ order.id }}"
+                                style="margin-top: 1%;">
+                            Посмотреть список товаров
+                        </button>
+                        <div class="collapse" id="collapse-{{ order.id }}" style="margin-top: 1%;">
+                            {% include 'orders/order_items_table.html' %}
+                        </div>
                     </li>
                     {% if forloop.counter|divisibleby:"6" %}
                         </ul>

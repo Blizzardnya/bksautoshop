@@ -1,0 +1,26 @@
+<table class="table table-sm table-bordered">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">Наименование</th>
+        <th scope="col">Цена, руб.</th>
+        <th scope="col">Количество</th>
+        <th scope="col">Сумма, руб.</th>
+        <th scope="col">Контейнеры</th>
+    </tr>
+    </thead>
+    {% for line in order.items.all %}
+        <tr>
+            <td>{{ line.product.name }}</td>
+            <td>{{ line.price }}</td>
+            <td>{{ line.quantity }} {{ line.product.unit.short_name }}</td>
+            <td>{{ line.get_cost }}</td>
+            <td>
+                {% for container in line.containers.all %}
+                    <p>{{ container.number }}</p>
+                {% empty %}
+                    <p>Контейнеров не найдено</p>
+                {% endfor %}
+            </td>
+        </tr>
+    {% endfor %}
+</table>

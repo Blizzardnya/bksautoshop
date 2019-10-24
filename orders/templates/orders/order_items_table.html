@@ -16,7 +16,7 @@
             <td>{{ line.get_cost }}</td>
             <td>
                 {% for container in line.containers.all %}
-                    <p>{{ container.number }}</p>
+                    <p>№{{ container.number }} - {{ container.quantity }} {{ line.product.unit.short_name }}</p>
                 {% empty %}
                     <p>Контейнеров не найдено</p>
                 {% endfor %}

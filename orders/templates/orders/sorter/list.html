@@ -1,4 +1,5 @@
 {% extends "bid/base.html" %}
+{% load crispy_forms_tags %}
 
 {% block title %}Заявки пользователей{% endblock %}
 
@@ -9,7 +10,7 @@
                 {% for order in orders %}
                     <li class="list-group-item">
                         <div class="d-flex justify-content-between align-items-center">
-                            <a class="h4" href="{% url 'orders:view_order' order.id %}" role="button">
+                            <a class="h4" href="{% url 'orders:sorter_view_order' order.id %}" role="button">
                                 Заявка №{{ order.id }} - Итого: {{ order.get_total_cost }}
                             </a>
                             <h4>

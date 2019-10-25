@@ -52,7 +52,7 @@ class Order(models.Model):
         return reverse('orders:view_order', args=[self.id])
 
     def __str__(self):
-        return 'Заявка {}'.format(self.id)
+        return f'Заявка №{self.id}'
 
     get_total_cost.short_description = 'Итого'
 

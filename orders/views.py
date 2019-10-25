@@ -19,7 +19,7 @@ from .models import Order, OrderItem, Container
 from cart.cart import Cart
 from accounts.models import ShopUser
 from bid.models import Unit
-from .forms import ContainerAddForm
+from .forms import ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm
 
 
 @login_required()
@@ -66,10 +66,37 @@ class OrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView)
     template_name = 'orders/merchandiser/view.html'
     permission_required = 'orders.view_order'
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['container_form'] = ContainerAddForm()
-        return context
+
+def view_order_sorter(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    order_items = []
+
+    for item in order.items.all():
+        order_item = {
+            'item': item,
+            'containers': []
+        }
+
+        for container in item.containers.all():
+            container_item = {
+                'container': container,
+                'form': ContainerWeightOrderItemAddForm(initial={
+                    'container_number': container.number,
+                    'quantity': container.quantity
+                }) if item.product.unit.is_weight_type() else
+                ContainerPieceOrderItemAddForm(initial={
+                    'container_number': container.number,
+                    'quantity': int(container.quantity)
+                })
+            }
+            order_item['containers'].append(container_item)
+
+        order_items.append(order_item)
+
+    print(order_items)
+    container_order_form = ContainerOrderAddForm()
+    return render(request, 'orders/sorter/view.html',
+                  context={'order': order, 'order_items': order_items, 'container_order_form': container_order_form})
 
 
 @login_required()
@@ -105,7 +132,7 @@ class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.L
                                  BID_TIME.get('second'), BID_TIME.get('millisecond'), timezone.get_current_timezone())
 
         return Order.objects.filter(
-            status=Order.PROCESSED, created__lte=date
+            status__in=(Order.PROCESSED, Order.ASSEMBLED), created__lte=date
         ).order_by('-created')
 
 
@@ -115,25 +142,45 @@ class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.L
 def ser_order_container(request, pk):
     order = get_object_or_404(Order, id=pk)
     conainer_number = None
-    container_form = ContainerAddForm(request.POST)
+    container_form = ContainerOrderAddForm(request.POST)
 
     if container_form.is_valid():
         conainer_number = container_form.cleaned_data['container_number']
 
     if conainer_number:
-        for item in order.items.all():
-            Container.objects.create(
-                order_item=item,
-                number=conainer_number,
-                quantity=item.quantity)
+        created = 0
 
-        order.status = Order.ASSEMBLED
-        order.shipped = timezone.now()
+        for item in order.items.all():
+            container_quantity = 0
+
+            for container in item.containers.all():
+                container_quantity += container.quantity
+
+            if container_quantity < item.quantity:
+                Container.objects.create(
+                    order_item=item,
+                    number=conainer_number,
+                    quantity=item.quantity - container_quantity)
+                created += 1
+            else:
+                messages.add_message(request, 40, f'Товар {item.product.name} укомплектован в полном количестве')
+
+        if created > 0:
+            order.status = Order.ASSEMBLED
+            order.assembled = timezone.now()
+            order.save()
 
         return HttpResponseRedirect(reverse('orders:view_order', args=[pk]))
 
     messages.add_message(request, 40, 'Контейнер не указан')
-    return HttpResponseRedirect(reverse('orders:view_order', args=[pk]))
+    return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
+
+
+@login_required()
+@require_POST
+@permission_required('accounts.is_sorter')
+def set_order_item_container(request, pk):
+    order_item = get_object_or_404(OrderItem, id=pk)
 
 
 @login_required()
@@ -148,4 +195,4 @@ def set_order_as_shipped(request, pk):
     order.status = Order.SHIPPED
     order.shipped = timezone.now()
     order.save()
-    return HttpResponseRedirect(reverse('orders:view_order', args=[pk]))
+    return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))

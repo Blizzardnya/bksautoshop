@@ -1,15 +1,20 @@
 {% extends "bid/base.html" %}
-{% load crispy_forms_tags %}
 
-{% block title %}Заявка № {{ order.id }}{% endblock %}
+{% block title %}{{ order }}{% endblock %}
 
 {% block content %}
     <div class="container">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-warning" role="alert">{{ message }}</div>
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
             {% endfor %}
         {% endif %}
+
         <div class="row">
             <div class="col-4">
                 <h3>Заявка № {{ order.id }}</h3>
@@ -25,24 +30,6 @@
         <br>
         <h3>Итого по заказу: {{ order.get_total_cost }} руб.</h3>
         <hr>
-        {% if perms.accounts.is_merchandiser %}
-            <a class="btn btn-primary" href="{% url 'orders:sorter_list_orders' %}" role="button">Назад</a>
-        {% endif %}
-        {% if perms.accounts.is_sorter %}
-            <div class="row">
-                <div class="col-xl-6 col-md-12">
-                    <form action="{% url 'orders:add_container_order' order.id %}" method="post">
-                        {% csrf_token %}
-                        {{ container_form|crispy  }}
-                        <input type="submit" value="Добавить контейнер для всей заявки" class="btn btn-success">
-                    </form>
-                </div>
-                <div class="col-xl-6 col-md-12">
-                    <a class="btn btn-primary" href="{% url 'orders:shipped_order' order.id %}" role="button">Пометить заявку отгруженной</a>
-                </div>
-            </div>
-            <hr>
-            <a class="btn btn-primary" href="{% url 'orders:sorter_list_orders' %}" role="button">Назад</a>
-        {% endif %}
+        <a class="btn btn-primary" href="{% url 'orders:sorter_list_orders' %}" role="button">Назад</a>
     </div>
 {% endblock %}

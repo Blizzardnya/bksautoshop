@@ -1,36 +1,11 @@
 {% extends "bid/base.html" %}
 {% load static %}
-{% load crispy_forms_tags %}
 {% block title %} {% if category %}{{ category.name }} {% else %} Товары {% endif %} {% endblock %}
 
 {% block content %}
     <div class="col-xl-10 col-md-9">
         <div class="container-fluid">
-            <div class="row">
-                {% for product in products %}
-                    <div class="col-xl-3 col-md-4" style="padding: 0 5px 0 5px;">
-                        <div class="card" style="margin-top: 2%">
-                            <div class="card-body">
-                                <h6 class="card-title text-center">{{ product.name }}</h6>
-                                <p class="card-text">Цена {{ product.price }} руб., за {{ product.unit.short_name }}</p>
-                                <form action="{% url "cart:cart_add" product.id %}" method="post">
-                                    {% csrf_token %}
-                                    {% if product.unit.is_weight_type %}
-                                        {{ cart_weight_product_form|crispy }}
-                                    {% else %}
-                                        {{ cart_piece_product_form|crispy }}
-                                    {% endif %}
-{#                                    {{ cart_product_form|crispy }}#}
-                                    <input type="hidden" name="next" value="{{ request.path }}">
-                                    <input type="submit" value="Добавить" class="btn btn-success">
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                {% empty %}
-                    <p>В справочнике товаров нет записей</p>
-                {% endfor %}
-            </div>
+        {% include 'bid/product/product_list_module.html' %}
             {% with list=products %}
                 {% include 'bid/paginator.html' %}
             {% endwith %}

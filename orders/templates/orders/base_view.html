@@ -1,0 +1,37 @@
+{% extends "bid/base.html" %}
+
+{% block title %}{{ order }}{% endblock %}
+
+{% block content %}
+    <div class="container">
+        {% block order_view_head %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <div class="col-4">
+                    <h3>Заявка № {{ order.id }}</h3>
+                </div>
+                <div class="col-8">
+                    <h5>Дата создания: {{ order.created }}</h5>
+                    <h5>Дата комплектровки: {{ order.assembled|default_if_none:"Нет" }}</h5>
+                    <h5>Дата отгрузки: {{ order.shipped|default_if_none:"Нет" }}</h5>
+                </div>
+            </div>
+            <h4>Товары: </h4>
+            {% include 'orders/order_items_table.html' %}
+            <br>
+            <h3>Итого по заказу: {{ order.get_total_cost }} руб.</h3>
+        {% endblock %}
+        <hr>
+        {% block order_view_footer %}{% endblock %}
+    </div>
+{% endblock %}

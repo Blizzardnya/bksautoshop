@@ -20,6 +20,10 @@
                 {% empty %}
                     <p>Контейнеров не найдено</p>
                 {% endfor %}
+                {% if perms.accounts.is_sorter and line.containers.count > 0 %}
+                    <a class="btn btn-warning" href="{% url 'orders:order_item_containers' order.id line.id %}"
+                       role="button">Изменить</a>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}

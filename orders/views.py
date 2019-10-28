@@ -67,36 +67,64 @@ class OrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView)
     permission_required = 'orders.view_order'
 
 
-def view_order_sorter(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    order_items = []
+class SorterOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
+    """ Просмотр заявки пользователя """
+    model = Order
+    template_name = 'orders/sorter/view.html'
+    permission_required = 'accounts.is_sorter'
 
-    for item in order.items.all():
-        order_item = {
-            'item': item,
-            'containers': []
-        }
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['container_order_form'] = ContainerOrderAddForm()
+        return context
 
-        for container in item.containers.all():
-            container_item = {
-                'container': container,
-                'form': ContainerWeightOrderItemAddForm(initial={
-                    'container_number': container.number,
-                    'quantity': container.quantity
-                }) if item.product.unit.is_weight_type() else
-                ContainerPieceOrderItemAddForm(initial={
-                    'container_number': container.number,
-                    'quantity': int(container.quantity)
-                })
-            }
-            order_item['containers'].append(container_item)
 
-        order_items.append(order_item)
+@login_required()
+@permission_required('accounts.is_sorter')
+def view_order_item_containers(request, pk, order_item_id):
+    order_item = get_object_or_404(OrderItem, id=order_item_id)
 
-    print(order_items)
-    container_order_form = ContainerOrderAddForm()
-    return render(request, 'orders/sorter/view.html',
-                  context={'order': order, 'order_items': order_items, 'container_order_form': container_order_form})
+    containers = [{'container': container,
+                   'form': ContainerWeightOrderItemAddForm(initial={
+                       'container_number': container.number,
+                       'quantity': container.quantity
+                   }) if container.order_item.product.unit.is_weight_type() else
+                   ContainerPieceOrderItemAddForm(initial={
+                       'container_number': container.number,
+                       'quantity': int(container.quantity)
+                   })} for container in order_item.containers.all()]
+
+    return render(request, 'orders/sorter/containers.html',
+                  context={'containers': containers, 'order_id': pk, 'order_item': order_item})
+
+
+@login_required()
+@require_POST
+@permission_required('accounts.is_sorter')
+def update_container(request, pk, order_item_id, container_id):
+    container = get_object_or_404(Container, id=container_id)
+    order_item = container.order_item
+
+    if container.order_item.product.unit.is_weight_type():
+        form = ContainerWeightOrderItemAddForm(request.POST)
+    else:
+        form = ContainerPieceOrderItemAddForm(request.POST)
+
+    if form.is_valid():
+        containers_total_quantity = order_item.get_total_quantity_in_containers()
+
+        if order_item.quantity >= containers_total_quantity - container.quantity + form.cleaned_data['quantity']:
+            container.number = form.cleaned_data['container_number']
+            container.quantity = form.cleaned_data['quantity']
+            container.save(update_fields=['number', 'quantity'])
+            messages.add_message(request, messages.SUCCESS, 'Контейнер обновлён')
+        else:
+            messages.add_message(request, messages.ERROR,
+                                 'Количество товара в контейнере не может быть больше количества товара по заявке')
+    else:
+        messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
+
+    return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
 
 @login_required()
@@ -139,38 +167,36 @@ class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.L
 @login_required()
 @require_POST
 @permission_required('accounts.is_sorter')
-def ser_order_container(request, pk):
+def set_order_container(request, pk):
     order = get_object_or_404(Order, id=pk)
-    conainer_number = None
+    container_number = None
     container_form = ContainerOrderAddForm(request.POST)
 
     if container_form.is_valid():
-        conainer_number = container_form.cleaned_data['container_number']
+        container_number = container_form.cleaned_data['container_number']
 
-    if conainer_number:
+    if container_number:
         created = 0
 
         for item in order.items.all():
-            container_quantity = 0
+            container_total_quantity = item.get_total_quantity_in_containers()
 
-            for container in item.containers.all():
-                container_quantity += container.quantity
-
-            if container_quantity < item.quantity:
+            if container_total_quantity < item.quantity:
                 Container.objects.create(
                     order_item=item,
-                    number=conainer_number,
-                    quantity=item.quantity - container_quantity)
+                    number=container_number,
+                    quantity=item.quantity - container_total_quantity)
                 created += 1
             else:
-                messages.add_message(request, 40, f'Товар {item.product.name} укомплектован в полном количестве')
+                messages.add_message(request, messages.WARNING,
+                                     f'Товар {item.product.name} укомплектован в полном количестве')
 
         if created > 0:
             order.status = Order.ASSEMBLED
             order.assembled = timezone.now()
-            order.save()
+            order.save(update_fields=['status', 'assembled'])
 
-        return HttpResponseRedirect(reverse('orders:view_order', args=[pk]))
+        return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
     messages.add_message(request, 40, 'Контейнер не указан')
     return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
@@ -179,7 +205,7 @@ def ser_order_container(request, pk):
 @login_required()
 @require_POST
 @permission_required('accounts.is_sorter')
-def set_order_item_container(request, pk):
+def add_order_item_container(request, pk):
     order_item = get_object_or_404(OrderItem, id=pk)
 
 

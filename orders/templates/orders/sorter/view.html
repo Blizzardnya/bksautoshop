@@ -1,85 +1,20 @@
-{% extends "bid/base.html" %}
+{% extends "orders/base_view.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}{{ order }}{% endblock %}
-
-{% block content %}
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="row">
-            <div class="col-4">
-                <h3>Заявка № {{ order.id }}</h3>
-            </div>
-            <div class="col-8">
-                <h5>Дата создания: {{ order.created }}</h5>
-                <h5>Дата комплектровки: {{ order.assembled|default_if_none:"Нет" }}</h5>
-                <h5>Дата отгрузки: {{ order.shipped|default_if_none:"Нет" }}</h5>
-            </div>
+{% block order_view_footer %}
+    <div class="row">
+        <div class="col-xl-6 col-md-12">
+            <form action="{% url 'orders:add_container_order' order.id %}" method="post">
+                {% csrf_token %}
+                {{ container_order_form|crispy }}
+                <input type="submit" value="Добавить контейнер для всей заявки" class="btn btn-success">
+            </form>
         </div>
-        <h4>Товары: </h4>
-        <table class="table table-sm table-bordered">
-            <thead class="thead-dark">
-            <tr>
-                <th scope="col">Наименование</th>
-                <th scope="col">Цена, руб.</th>
-                <th scope="col">Количество</th>
-                <th scope="col">Сумма, руб.</th>
-                <th scope="col">Контейнеры</th>
-            </tr>
-            </thead>
-            {% for item in order_items %}
-                <tr>
-                    <td>{{ item.item.product.name }}</td>
-                    <td>{{ item.item.price }}</td>
-                    <td>{{ item.item.quantity }} {{ item.item.product.unit.short_name }}</td>
-                    <td>{{ item.item.get_cost }}</td>
-                    <td>
-                        {% for container in item.containers %}
-                            <form action="{% url 'orders:add_container_order' item.item.id %}" method="post">
-                                {% csrf_token %}
-                                <div class="form-row">
-                                    <div class="col-md-6">
-                                        {{ container.form.container_number|as_crispy_field }}
-                                    </div>
-                                    <div class="col-md-6">
-                                        {{ container.form.quantity|as_crispy_field }}
-                                    </div>
-                                </div>
-                                <input type="submit" value="Обновить" class="btn btn-warning">
-                            </form>
-                        {% empty %}
-                            <p>Контейнеров не найдено</p>
-                        {% endfor %}
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-        <br>
-        <h3>Итого по заказу: {{ order.get_total_cost }} руб.</h3>
-        <hr>
-        <div class="row">
-            <div class="col-xl-6 col-md-12">
-                <form action="{% url 'orders:add_container_order' order.id %}" method="post">
-                    {% csrf_token %}
-                    {{ container_order_form|crispy  }}
-                    <input type="submit" value="Добавить контейнер для всей заявки" class="btn btn-success">
-                </form>
-            </div>
-            <div class="col-xl-6 col-md-12">
-                <a class="btn btn-primary" href="{% url 'orders:shipped_order' order.id %}" role="button">Пометить заявку отгруженной</a>
-            </div>
+        <div class="col-xl-6 col-md-12">
+            <a class="btn btn-primary" href="{% url 'orders:shipped_order' order.id %}" role="button">Пометить заявку
+                отгруженной</a>
         </div>
-        <hr>
-        <a class="btn btn-primary" href="{% url 'orders:sorter_list_orders' %}" role="button">Назад</a>
     </div>
+    <hr>
+    <a class="btn btn-primary" href="{% url 'orders:sorter_list_orders' %}" role="button">Назад</a>
 {% endblock %}

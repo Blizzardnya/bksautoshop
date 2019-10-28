@@ -34,7 +34,7 @@ class Order(models.Model):
     status = models.CharField("Статус", max_length=1, choices=ORDER_STATUS, default=NEW)
 
     class Meta:
-        ordering = ('-created', )
+        ordering = ('-created',)
         verbose_name = 'Заявка'
         verbose_name_plural = 'Заявки'
 
@@ -70,6 +70,9 @@ class OrderItem(models.Model):
 
     def get_cost(self):
         return round(self.price * self.quantity, 2)
+
+    def get_total_quantity_in_containers(self):
+        return round(sum(container.quantity for container in self.containers.all()), 2)
 
     def __str__(self):
         return self.product.name

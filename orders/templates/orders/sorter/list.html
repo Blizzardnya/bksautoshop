@@ -1,6 +1,6 @@
 {% extends "bid/base.html" %}
 
-{% block title %}Весовой товар{% endblock %}
+{% block title %}Заявки пользователей{% endblock %}
 
 {% block content %}
     <div class="container" style="margin-top: 1%">
@@ -9,7 +9,7 @@
                 {% for order in orders %}
                     <li class="list-group-item">
                         <div class="d-flex justify-content-between align-items-center">
-                            <a class="h4" href="{% url 'orders:view_order' order.id %}" role="button">
+                            <a class="h4" href="{% url 'orders:sorter_view_order' order.id %}" role="button">
                                 Заявка №{{ order.id }} - Итого: {{ order.get_total_cost }}
                             </a>
                             <h4>
@@ -18,15 +18,22 @@
                                 </span>
                             </h4>
                         </div>
-                        <p>Торговый объект: {{ order.user.shop }}</p>
-                        <p>Дата создания: {{ order.created }}</p>
-
                         <ul class="list-group">
-                            {% for item in order.get_items_for_packer %}
-                                <li class="list-group-item">{{ item.product }} - {{ item.price }}
-                                    x {{ item.quantity }} {{ item.product.unit }}</li>
-                            {% endfor %}
+                            <li class="list-group-item">Дата создания: {{ order.created }}</li>
+                            <li class="list-group-item">Дата
+                                комплектровки: {{ order.assembled|default_if_none:"Нет" }}</li>
+                            <li class="list-group-item">Дата
+                                отгрузки: {{ order.shipped|default_if_none:"Нет" }}</li>
                         </ul>
+                        <button class="btn btn-primary" type="button" data-toggle="collapse"
+                                data-target="#collapse-{{ order.id }}" aria-expanded="false"
+                                aria-controls="#collapse-{{ order.id }}"
+                                style="margin-top: 1%;">
+                            Посмотреть список товаров
+                        </button>
+                        <div class="collapse" id="collapse-{{ order.id }}" style="margin-top: 1%;">
+                            {% include 'orders/order_items_table.html' %}
+                        </div>
                     </li>
                     {% if forloop.counter|divisibleby:"6" %}
                         </ul>

@@ -59,7 +59,7 @@
                         <td>
                             <a href="{% url "cart:cart_remove" product.id %}" class="btn btn-danger">Удалить</a>
                         </td>
-                        <td>{{ item.price }} за {{ product.unit.short_name }}</td>
+                        <td>{{ item.price }} за {{ product.unit }}</td>
                         <td>{{ item.total_price }}</td>
                     </tr>
                 {% endwith %}

@@ -1,0 +1,26 @@
+{% load crispy_forms_tags %}
+
+<div class="row">
+    {% for product in products %}
+        <div class="col-xl-3 col-md-4" style="padding: 0 5px 0 5px;">
+            <div class="card" style="margin-top: 2%">
+                <div class="card-body">
+                    <h6 class="card-title text-center">{{ product.name }}</h6>
+                    <p class="card-text">Цена {{ product.price }} руб., за {{ product.unit }}</p>
+                    <form action="{% url "cart:cart_add" product.id %}" method="post">
+                        {% csrf_token %}
+                        {% if product.unit.is_weight_type %}
+                            {{ cart_weight_product_form|crispy }}
+                        {% else %}
+                            {{ cart_piece_product_form|crispy }}
+                        {% endif %}
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <input type="submit" value="Добавить" class="btn btn-success">
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p>В справочнике товаров нет записей</p>
+    {% endfor %}
+</div>

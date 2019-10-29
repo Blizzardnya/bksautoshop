@@ -5,11 +5,16 @@
             <li class="list-inline-item"><a href="{% url 'bid:index' %}">Главная</a></li>
             {% if perms.accounts.is_merchandiser %}
                 <li class="list-inline-item"><a href="{% url 'bid:product_list' %}">Товары</a></li>
-                <li class="list-inline-item"><a href="{% url 'orders:list_orders' %}">Заявки</a></li>
+                <li class="list-inline-item"><a href="{% url 'orders:merchandiser_list_orders' %}">Заявки</a></li>
             {% endif %}
             {% if perms.accounts.is_packer %}
                 <li class="list-inline-item">
                     <a href="{% url 'orders:packer_list_orders' %}">Весовой товар по заявкам</a>
+                </li>
+            {% endif %}
+            {% if perms.accounts.is_sorter %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'orders:sorter_list_orders' %}">Список заявок</a>
                 </li>
             {% endif %}
         </ul>

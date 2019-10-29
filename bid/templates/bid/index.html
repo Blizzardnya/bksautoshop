@@ -32,12 +32,7 @@
                                         Заявка №{{ last_order.id }} - Итого: {{ last_order.get_total_cost }}
                                     </a>
                                     <h4>
-                                        <span class="badge
-                                            {% if last_order.status == 'N' %} badge-primary
-                                            {% elif last_order.status == 'P' %} badge-warning
-                                            {% elif last_order.status == 'A' %} badge-info
-                                            {% else %} badge-success
-                                            {% endif %} float-right">
+                                        <span class="badge badge-{{ last_order.get_status_color }}">
                                             {{ last_order.get_status_display }}
                                         </span>
                                     </h4>

@@ -1,6 +1,6 @@
 {% extends "bid/base.html" %}
 
-{% block title %}Заказы пользователя{% endblock %}
+{% block title %}Заявки пользователя{% endblock %}
 
 {% block content %}
     <div class="col-xl-10 col-md-8">
@@ -14,12 +14,7 @@
                                     Заявка №{{ order.id }} - Итого: {{ order.get_total_cost }}
                                 </a>
                                 <h4>
-                                    <span class="badge
-                                        {% if order.status == 'N' %} badge-primary
-                                        {% elif order.status == 'P' %} badge-warning
-                                        {% elif order.status == 'A' %} badge-info
-                                        {% else %} badge-success
-                                        {% endif %} float-right">
+                                    <span class="badge badge-{{ order.get_status_color }}">
                                         {{ order.get_status_display }}
                                     </span>
                                 </h4>

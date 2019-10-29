@@ -16,8 +16,10 @@
             {% endfor %}
         {% endif %}
 
-        <h5>{{ order_item.order }}</h5>
-        <h5>{{ order_item.product.name }}</h5>
+        <p class="h5"><strong>{{ order_item.order }}</strong></p>
+        <p class="h5"><strong>Товар:</strong> {{ order_item.product.name }}</p>
+        <p class="h5"><strong>Количество в заявке:</strong> {{ order_item.quantity }} {{ order_item.product.unit }}</p>
+        <h5>Список контейнеров:</h5>
         <ul class="list-group col-xl-6 col-md-12">
             {% for item in containers %}
                 <li class="list-group-item">
@@ -32,15 +34,35 @@
                                 {{ item.form.quantity|as_crispy_field }}
                             </div>
                         </div>
-                        <input type="submit" value="Обновить" class="btn btn-warning">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <input type="submit" value="Обновить" class="btn btn-warning">
+                            <a href="{% url 'orders:delete_container' order_id order_item.id item.container.id %}"
+                               class="btn btn-danger" role="button">Удалить</a>
+                        </div>
                     </form>
                 </li>
                 {% if forloop.counter|divisibleby:"6" %}
                     </ul>
                     <ul class="list-group col-xl-6 col-md-12">
                 {% endif %}
+            {% empty %}
+                <p>Список контейнеров пуст</p>
             {% endfor %}
             </ul>
+        <hr>
+        <p class="h5">Добавить контейнер:</p>
+        <form action="{% url 'orders:add_container' order_id order_item.id %}" method="post">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="col-6">
+                    {{ add_container_form.container_number|as_crispy_field }}
+                </div>
+                <div class="col-6">
+                    {{ add_container_form.quantity|as_crispy_field }}
+                </div>
+            </div>
+            <input type="submit" value="Добавить" class="btn btn-success">
+        </form>
         <hr>
         <a class="btn btn-primary" href="{% url 'orders:sorter_view_order' order_id %}" role="button">Назад</a>
     </div>

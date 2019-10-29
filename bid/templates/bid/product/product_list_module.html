@@ -6,7 +6,7 @@
             <div class="card" style="margin-top: 2%">
                 <div class="card-body">
                     <h6 class="card-title text-center">{{ product.name }}</h6>
-                    <p class="card-text">Цена {{ product.price }} руб., за {{ product.unit.short_name }}</p>
+                    <p class="card-text">Цена {{ product.price }} руб., за {{ product.unit }}</p>
                     <form action="{% url "cart:cart_add" product.id %}" method="post">
                         {% csrf_token %}
                         {% if product.unit.is_weight_type %}

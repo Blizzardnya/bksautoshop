@@ -24,7 +24,7 @@
                         <ul class="list-group">
                             {% for item in order.get_items_for_packer %}
                                 <li class="list-group-item">{{ item.product }} - {{ item.price }}
-                                    x {{ item.quantity }} {{ item.product.unit.short_name }}</li>
+                                    x {{ item.quantity }} {{ item.product.unit }}</li>
                             {% endfor %}
                         </ul>
                     </li>

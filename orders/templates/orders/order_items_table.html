@@ -12,7 +12,7 @@
         <tr>
             <td>{{ line.product.name }}</td>
             <td>{{ line.price }}</td>
-            <td>{{ line.quantity }} {{ line.product.unit.short_name }}</td>
+            <td>{{ line.quantity }} {{ line.product.unit }}</td>
             <td>{{ line.get_cost }}</td>
             <td>
                 {% for container in line.containers.all %}
@@ -20,7 +20,7 @@
                 {% empty %}
                     <p>Контейнеров не найдено</p>
                 {% endfor %}
-                {% if perms.accounts.is_sorter and line.containers.count > 0 %}
+                {% if perms.accounts.is_sorter %}
                     <a class="btn btn-warning" href="{% url 'orders:order_item_containers' order.id line.id %}"
                        role="button">Изменить</a>
                 {% endif %}

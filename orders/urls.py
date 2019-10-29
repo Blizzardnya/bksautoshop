@@ -18,7 +18,9 @@ urlpatterns = [
             path('add_container/', views.set_order_container, name='add_container_order'),
             path('<int:order_item_id>/', include([
                 path('', views.view_order_item_containers, name='order_item_containers'),
+                path('containers/add/', views.create_container, name='add_container'),
                 path('<int:container_id>/update/', views.update_container, name='update_container'),
+                path('<int:container_id>/delete/', views.delete_container, name='delete_container'),
             ])),
         ])),
     ])),

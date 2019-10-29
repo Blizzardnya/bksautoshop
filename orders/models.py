@@ -51,6 +51,16 @@ class Order(models.Model):
     def get_absolute_url(self):
         return reverse('orders:view_order', args=[self.id])
 
+    def is_full_assembled(self):
+        total_items_quantity = 0
+        total_containers_quantity = 0
+
+        for item in self.items.all():
+            total_items_quantity += item.quantity
+            total_containers_quantity += item.get_total_quantity_in_containers()
+
+        return True if total_items_quantity == total_containers_quantity else False
+
     def __str__(self):
         return f'Заявка №{self.id}'
 

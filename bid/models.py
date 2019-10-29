@@ -23,7 +23,7 @@ class Unit(models.Model):
         verbose_name_plural = 'Меры исчисления'
 
     def __str__(self):
-        return self.name
+        return self.short_name
 
     def is_weight_type(self):
         return True if self.type == self.WEIGHT else False

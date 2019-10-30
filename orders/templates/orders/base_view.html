@@ -21,9 +21,10 @@
                     <h3>Заявка № {{ order.id }}</h3>
                 </div>
                 <div class="col-8">
-                    <h5>Дата создания: {{ order.created }}</h5>
-                    <h5>Дата комплектровки: {{ order.assembled|default_if_none:"Нет" }}</h5>
-                    <h5>Дата отгрузки: {{ order.shipped|default_if_none:"Нет" }}</h5>
+                    <p class="h5">Торговый объект: {{ order.user.shop }}</p>
+                    <p class="h5">Дата создания: {{ order.created }}</p>
+                    <p class="h5">Дата комплектровки: {{ order.assembled|default_if_none:"Нет" }}</p>
+                    <p class="h5">Дата отгрузки: {{ order.shipped|default_if_none:"Нет" }}</p>
                 </div>
             </div>
             <h4>Товары: </h4>

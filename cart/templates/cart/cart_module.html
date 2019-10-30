@@ -31,7 +31,7 @@
         <div class="input-group">
             <a href="{% url "cart:cart_detail" %}" class="btn btn-info btn-block" role="button">Посмотреть корзину</a>
             <a href="{% url "orders:order_create" %}" class="btn btn-success btn-block {% if cart|length == 0 %}
-                       disabled {% endif %}" role="button">Оформить чек</a>
+                       disabled {% endif %}" role="button">Оформить заявку</a>
         </div>
     </form>
 </div>

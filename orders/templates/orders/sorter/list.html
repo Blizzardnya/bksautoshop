@@ -19,6 +19,7 @@
                             </h4>
                         </div>
                         <ul class="list-group">
+                            <li class="list-group-item">Торговый объект: {{ order.user.shop }}</li>
                             <li class="list-group-item">Дата создания: {{ order.created }}</li>
                             <li class="list-group-item">Дата
                                 комплектровки: {{ order.assembled|default_if_none:"Нет" }}</li>

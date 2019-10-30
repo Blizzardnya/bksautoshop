@@ -11,14 +11,12 @@ from django.views import generic
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from django.core.paginator import Paginator
-from django.db.models import Count, Q
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
 from .models import Order, OrderItem, Container
 from cart.cart import Cart
 from accounts.models import ShopUser
-from bid.models import Unit
 from .forms import ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddFormDis, \
     ContainerWeightOrderItemAddFormDis
 
@@ -40,7 +38,8 @@ def create_order(request):
                 order=order,
                 product=item['product'],
                 price=item['price'],
-                quantity=item['quantity'])
+                quantity=item['quantity'],
+                packed=not item['product'].unit.is_weight_type())
         cart.clear()
         return render(request, 'orders/merchandiser/created.html', context={'order': order})
     else:
@@ -211,20 +210,37 @@ def delete_container(request, pk, order_item_id, container_id):
 @permission_required('accounts.is_packer')
 def packer_product_list(request):
     """ Просмотр списка заявок для упаковщика """
-    today = timezone.now()
-    date = timezone.datetime(today.year, today.month, today.day, BID_TIME.get('hour'), BID_TIME.get('minute'),
-                             BID_TIME.get('second'), BID_TIME.get('millisecond'), timezone.get_current_timezone())
-
-    weight_units = Unit.objects.filter(type=Unit.WEIGHT)
-    items = Count('items', filter=Q(items__product__unit__in=weight_units))
-    orders_list = Order.objects.annotate(items_count=items).filter(status=Order.PROCESSED, created__lte=date,
-                                                                   items_count__gt=0)
+    orders_list = Order.get_orders_for_packer()
 
     paginator = Paginator(orders_list, 12)
     page = request.GET.get('page')
     orders = paginator.get_page(page)
 
     return render(request, 'orders/packer/list.html', {'orders': orders})
+
+
+@login_required()
+@permission_required('accounts.is_packer')
+def set_order_as_packed(request, order_id):
+    """ Пометить строку заявку с весовым товаром как упакованную """
+    order = get_object_or_404(Order, id=order_id)
+
+    for item in order.items.filter(packed=False):
+        item.packed = True
+        item.save(update_fields=['packed'])
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+
+@login_required()
+@permission_required('accounts.is_packer')
+def set_order_item_as_packed(request, order_item_id):
+    """ Пометить все строки заявки с весовым товаром как упакованные """
+    order_item = get_object_or_404(OrderItem, id=order_item_id)
+    order_item.packed = True
+    order_item.save(update_fields=['packed'])
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):

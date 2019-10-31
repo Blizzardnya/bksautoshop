@@ -10,7 +10,11 @@ urlpatterns = [
         path('shipped/', views.set_order_as_shipped, name='shipped_order'),
     ])),
     path('create/', views.create_order, name='order_create'),
-    path('packer/', views.packer_product_list, name='packer_list_orders'),
+    path('packer/', include([
+        path('', views.packer_product_list, name='packer_list_orders'),
+        path('<int:order_item_id>/UpdateItem', views.set_order_item_as_packed, name='update_order_item_packed'),
+        path('<int:order_id>/UpdateOrder', views.set_order_as_packed, name='update_order_packed'),
+    ])),
     path('sorter/', include([
         path('', views.SorterOrderListView.as_view(), name='sorter_list_orders'),
         path('<int:pk>/', include([

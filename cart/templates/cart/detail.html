@@ -11,8 +11,8 @@
         <div class="col">
             <h2>Ваша корзина
                 {% with totail_items=cart|length %}
-                    <a href="{% url "cart:cart_clear" %}" class="btn  btn-danger float-right {% if totail_items == 0 %}
-                       disabled {% endif %}" role="button">Очистить корзину</a>
+                    <a href="{% url "cart:cart_clear" %}" class="btn btn-danger float-right
+                       {% if totail_items == 0 %} disabled {% endif %}" role="button">Очистить корзину</a>
                     <span class="badge badge-secondary float-right">
                     {% if totail_items > 0 %}
                         <span style="color: #ffffff">
@@ -39,7 +39,7 @@
             {% for item in cart %}
                 {% with product=item.product %}
                     <tr>
-                        <td>{{ product.name }}</td>
+                        <td>{{ product }}</td>
                         <td>
                             <form action="{% url "cart:cart_add" product.id %}" method="post">
                                 {% csrf_token %}
@@ -49,12 +49,10 @@
                                         {{ item.update_quantity_form.update|as_crispy_field }}
                                     </div>
                                     <div class="col-md-6">
-                                        <input type="hidden" name="next" value="{{ request.path }}">
                                         <input type="submit" value="Обновить" class="btn btn-warning">
                                     </div>
                                 </div>
                             </form>
-
                         </td>
                         <td>
                             <a href="{% url "cart:cart_remove" product.id %}" class="btn btn-danger">Удалить</a>
@@ -72,9 +70,9 @@
             </tbody>
         </table>
         <p class="text-right">
-            <a href="{% url "bid:product_list" %}" class="btn  btn-info" role="button">Вернуться к списку товаров</a>
-            <a href="{% url "orders:order_create" %}" class="btn  btn-success {% if cart|length == 0 %}
-                       disabled {% endif %}" role="button">Оформить заявку</a>
+            <a href="{% url "bid:product_list" %}" class="btn btn-info" role="button">Вернуться к списку товаров</a>
+            <a href="{% url "orders:order_create" %}" class="btn btn-success
+                       {% if cart|length == 0 %} disabled {% endif %}" role="button">Оформить заявку</a>
         </p>
         {#        </div>#}
     </div>

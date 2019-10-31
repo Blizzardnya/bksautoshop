@@ -10,7 +10,7 @@
                     <li class="list-group-item">
                         <div class="d-flex justify-content-between align-items-center">
                             <a class="h4" href="{% url 'orders:view_order' order.id %}" role="button">
-                                Заявка №{{ order.id }} - Итого: {{ order.get_total_cost }}
+                                {{ order }} - Итого: {{ order.get_total_cost }}
                             </a>
                             <h4>
                                 <span class="badge badge-{{ order.get_status_color }}">
@@ -23,10 +23,20 @@
 
                         <ul class="list-group">
                             {% for item in order.get_items_for_packer %}
-                                <li class="list-group-item">{{ item.product }} - {{ item.price }}
-                                    x {{ item.quantity }} {{ item.product.unit }}</li>
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <p>{{ item.product }} - {{ item.price }} x {{ item.quantity }}
+                                            {{ item.product.unit }}</p>
+                                        <a href="{% url 'orders:update_order_item_packed' item.id %}"
+                                           class="btn btn-warning" role="button">Упаковано</a>
+                                    </div>
+                                </li>
                             {% endfor %}
                         </ul>
+                        <hr>
+                        <a href="{% url 'orders:update_order_packed' order.id %}" class="btn btn-success" role="button">
+                            Пометить заявку упакованной
+                        </a>
                     </li>
                     {% if forloop.counter|divisibleby:"6" %}
                         </ul>
@@ -34,7 +44,7 @@
                     {% endif %}
                 {% empty %}
                     <li class="list-group-item">
-                        <h3 class="text-center">Список заказов пуст.</h3>
+                        <h3 class="text-center">Список заявок пуст.</h3>
                     </li>
                 {% endfor %}
                 </ul>

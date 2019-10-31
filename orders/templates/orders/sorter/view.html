@@ -3,16 +3,17 @@
 
 {% block order_view_footer %}
     <div class="row">
-        <div class="col-xl-6 col-md-12">
+        <div class="col-xl-6 col-md-12" style="margin-top: 1%">
             <form action="{% url 'orders:add_container_order' order.id %}" method="post">
                 {% csrf_token %}
                 {{ container_order_form|crispy }}
                 <input type="submit" value="Добавить контейнер для всей заявки" class="btn btn-success">
             </form>
         </div>
-        <div class="col-xl-6 col-md-12">
-            <a class="btn btn-primary" href="{% url 'orders:shipped_order' order.id %}" role="button">Пометить заявку
-                отгруженной</a>
+        <div class="col-xl-6 col-md-12" style="margin-top: 1%">
+            <a class="btn btn-primary" href="{% url 'orders:shipped_order' order.id %}" role="button">
+                Пометить заявку отгруженной
+            </a>
         </div>
     </div>
     <hr>

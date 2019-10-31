@@ -1,8 +1,15 @@
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
+from django.db.models import Count, Q
 
 from accounts.models import ShopUser
 from bid.models import Product, Unit
+
+try:
+    from bksautoshop.local_settings import BID_TIME
+except (ImportError, ModuleNotFoundError):
+    from bksautoshop.prod_settings import BID_TIME
 
 
 class Order(models.Model):
@@ -43,7 +50,18 @@ class Order(models.Model):
 
     def get_items_for_packer(self):
         weight_units = Unit.objects.filter(type=Unit.WEIGHT)
-        return self.items.filter(product__unit__in=weight_units)
+        return self.items.filter(product__unit__in=weight_units, packed=False)
+
+    @staticmethod
+    def get_orders_for_packer():
+        today = timezone.now()
+        date = timezone.datetime(year=today.year, month=today.month, day=today.day,
+                                 tzinfo=timezone.get_current_timezone(), **BID_TIME)
+
+        weight_units = Unit.objects.filter(type=Unit.WEIGHT)
+        items = Count('items', filter=Q(items__product__unit__in=weight_units, items__packed=False))
+        return Order.objects.annotate(items_count=items).filter(status=Order.PROCESSED, created__lte=date,
+                                                                items_count__gt=0)
 
     def get_status_color(self):
         return self.STATUS_COLORS.get(self.status)
@@ -73,6 +91,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, verbose_name="Товар", related_name='order_item', on_delete=models.CASCADE)
     price = models.DecimalField("Цена", max_digits=10, decimal_places=2)
     quantity = models.DecimalField("Количество", max_digits=10, decimal_places=2)
+    packed = models.BooleanField("Упаковано", default=True)
 
     class Meta:
         verbose_name = 'Строка заявки'
@@ -86,6 +105,9 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return self.product.name
+
+    def packed_to_str(self):
+        return 'Да' if self.packed else 'Нет'
 
     get_cost.short_description = 'Стоимость'
 

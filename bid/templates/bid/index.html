@@ -20,28 +20,30 @@
                    role="button">Войти</a>
             {% endif %}
         </div>
-        {% if request.user.is_authenticated %}
-            {% if perms.accounts.is_merchandiser %}
-                {% if last_order %}
-                    <div class="container-fluid">
-                        <h4>Ваша последняя завка: </h4>
-                        <ul class="list-group col-xl-6 col-md-12 ">
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <a class="h4" href="{% url 'orders:view_order' last_order.id %}" role="button">
-                                        Заявка №{{ last_order.id }} - Итого: {{ last_order.get_total_cost }}
-                                    </a>
-                                    <h4>
-                                        <span class="badge badge-{{ last_order.get_status_color }}">
-                                            {{ last_order.get_status_display }}
-                                        </span>
-                                    </h4>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                {% endif %}
-            {% endif %}
+        {% if request.user.is_authenticated and perms.accounts.is_merchandiser %}
+            <div class="container-fluid">
+                <h4>Ваши последние завки: </h4>
+                <ul class="list-group col-xl-6 col-md-12 ">
+                    {% for item in last_orders %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <a class="h4" href="{% url 'orders:view_order' item.id %}" role="button">
+                                    {{ item }} - Итого: {{ item.get_total_cost }}
+                                </a>
+                                <h4>
+                                    <span class="badge badge-{{ item.get_status_color }}">
+                                        {{ item.get_status_display }}
+                                    </span>
+                                </h4>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">
+                            <p>Заявки отсутствуют</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
         {% endif %}
     </div>
 {% endblock %}

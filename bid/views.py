@@ -10,21 +10,20 @@ from .models import Category, Product
 from orders.models import Order
 from accounts.models import ShopUser
 from .forms import SearchForm
-# from cart.forms import CartAddProductForm
 from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
 
 
 def index(request):
     """ Главная страница приложения """
-    last_order = None
+    last_orders = []
 
     if request.user.is_authenticated:
         try:
-            last_order = Order.objects.filter(user=ShopUser.objects.get(user=request.user)).order_by('-created')[0]
+            last_orders = Order.objects.filter(user=ShopUser.objects.get(user=request.user)).order_by('-created')[:3]
         except (IndexError, ObjectDoesNotExist):
             pass
 
-    return render(request, 'bid/index.html', {'last_order': last_order})
+    return render(request, 'bid/index.html', {'last_orders': last_orders})
 
 
 @login_required()
@@ -52,7 +51,6 @@ def product_list(request, category_slug=None):
         'category': category,
         'categories': categories,
         'products': products,
-        # 'cart_product_form': CartAddProductForm()
         'cart_weight_product_form': CartAddWeightProductForm(),
         'cart_piece_product_form': CartAddPieceProductForm(),
     }
@@ -65,21 +63,12 @@ def product_list(request, category_slug=None):
 @require_POST
 def prepare_search(request):
     """ Получение и обработка ключевого слова для поиска """
-    # search_products = request.session.get('products', None)
     search_products = None
 
     form = SearchForm(request.POST)
     if form.is_valid():
-        # search_products = Product.objects.annotate(search=SearchVector('barcode', 'name')).filter(
-        #     search=form.cleaned_data['search_input'])
         search_products = form.cleaned_data['search_input']
 
-    # context = {
-    #     'products': search_products,
-    #     'cart_product_form': CartAddProductForm()
-    # }
-    #
-    # return render(request, 'bid/search.html', context)
     return redirect('bid:search_results', word=search_products)
 
 
@@ -92,7 +81,6 @@ def search_results(request, word):
     context = {
         'key_word': word,
         'products': search_products,
-        # 'cart_product_form': CartAddProductForm()
         'cart_weight_product_form': CartAddWeightProductForm(),
         'cart_piece_product_form': CartAddPieceProductForm(),
     }

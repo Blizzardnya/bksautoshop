@@ -10,7 +10,7 @@
                     <li class="list-group-item">
                         <div class="d-flex justify-content-between align-items-center">
                             <a class="h4" href="{% url 'orders:view_order' order.id %}" role="button">
-                                Заявка №{{ order.id }} - Итого: {{ order.get_total_cost }}
+                                {{ order }} - Итого: {{ order.get_total_cost }}
                             </a>
                             <h4>
                                 <span class="badge badge-{{ order.get_status_color }}">
@@ -44,7 +44,7 @@
                     {% endif %}
                 {% empty %}
                     <li class="list-group-item">
-                        <h3 class="text-center">Список заказов пуст.</h3>
+                        <h3 class="text-center">Список заявок пуст.</h3>
                     </li>
                 {% endfor %}
                 </ul>

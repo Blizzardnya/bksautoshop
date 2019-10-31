@@ -17,8 +17,8 @@ from django.urls import reverse
 from .models import Order, OrderItem, Container
 from cart.cart import Cart
 from accounts.models import ShopUser
-from .forms import ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddFormDis, \
-    ContainerWeightOrderItemAddFormDis
+from .forms import ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm, \
+    ContainerPieceOrderItemAddFormDis, ContainerWeightOrderItemAddFormDis
 
 
 @login_required()
@@ -82,7 +82,7 @@ class SorterOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.Detai
 @login_required()
 @permission_required('accounts.is_sorter')
 def view_order_item_containers(request, pk, order_item_id):
-    """ Просмотр контейнеров для обпределённой позиции в заявке """
+    """ Просмотр контейнеров для определённой позиции в заявке """
     order_item = get_object_or_404(OrderItem, id=order_item_id)
     containers = [{'container': container,
                    'form': ContainerWeightOrderItemAddFormDis(initial={
@@ -93,7 +93,13 @@ def view_order_item_containers(request, pk, order_item_id):
                        'container_number': container.number,
                        'quantity': int(container.quantity)
                    })} for container in order_item.containers.all()]
-    form = ContainerWeightOrderItemAddForm()
+
+    quantity_in_containers = order_item.get_total_quantity_in_containers()
+
+    if order_item.product.unit.is_weight_type():
+        form = ContainerWeightOrderItemAddForm(initial={'quantity': order_item.quantity - quantity_in_containers})
+    else:
+        form = ContainerPieceOrderItemAddForm(initial={'quantity': int(order_item.quantity - quantity_in_containers)})
 
     return render(request, 'orders/sorter/containers.html',
                   context={'containers': containers, 'order_id': pk, 'order_item': order_item,
@@ -108,28 +114,35 @@ def set_order_container(request, pk):
     order = get_object_or_404(Order, id=pk)
     container_form = ContainerOrderAddForm(request.POST)
     assembled_products = []
+    not_packed = []
 
     if container_form.is_valid():
         for item in order.items.all():
-            container_total_quantity = item.get_total_quantity_in_containers()
+            if item.packed:
+                container_total_quantity = item.get_total_quantity_in_containers()
 
-            if container_total_quantity < item.quantity:
-                container = Container.objects.filter(number=container_form.cleaned_data['container_number'],
-                                                     order_item=item).first()
-                if not container:
-                    Container.objects.create(
-                        order_item=item,
-                        number=container_form.cleaned_data['container_number'],
-                        quantity=item.quantity - container_total_quantity)
+                if container_total_quantity < item.quantity:
+                    container = Container.objects.filter(number=container_form.cleaned_data['container_number'],
+                                                         order_item=item).first()
+                    if not container:
+                        Container.objects.create(
+                            order_item=item,
+                            number=container_form.cleaned_data['container_number'],
+                            quantity=item.quantity - container_total_quantity)
+                    else:
+                        container.quantity = item.quantity
+                        container.save(update_fields=['quantity'])
                 else:
-                    container.quantity = item.quantity
-                    container.save(update_fields=['quantity'])
+                    assembled_products.append(item.product.name)
             else:
-                assembled_products.append(item.product.name)
+                not_packed.append(item.product.name)
 
-        if len(assembled_products) > 0:
+        if assembled_products:
             messages.add_message(request, messages.WARNING,
                                  f'Товары {assembled_products} укомплектованы в полном количестве')
+
+        if not_packed:
+            messages.add_message(request, messages.ERROR, f'Товары {not_packed} ещё не упакованы')
 
         return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
@@ -144,26 +157,28 @@ def create_container(request, pk, order_item_id):
     """ Добавление контейнера """
     order_item = get_object_or_404(OrderItem, id=order_item_id)
     form = ContainerWeightOrderItemAddForm(request.POST)
-
-    if form.is_valid():
-        containers_total_quantity = order_item.get_total_quantity_in_containers()
-        if order_item.quantity >= containers_total_quantity + form.cleaned_data['quantity']:
-            container = Container.objects.filter(number=form.cleaned_data['container_number'],
-                                                 order_item=order_item).first()
-            if not container:
-                Container.objects.create(
-                    order_item=order_item,
-                    number=form.cleaned_data['container_number'],
-                    quantity=form.cleaned_data['quantity']
-                )
+    if order_item.packed:
+        if form.is_valid():
+            containers_total_quantity = order_item.get_total_quantity_in_containers()
+            if order_item.quantity >= containers_total_quantity + form.cleaned_data['quantity']:
+                container = Container.objects.filter(number=form.cleaned_data['container_number'],
+                                                     order_item=order_item).first()
+                if not container:
+                    Container.objects.create(
+                        order_item=order_item,
+                        number=form.cleaned_data['container_number'],
+                        quantity=form.cleaned_data['quantity']
+                    )
+                else:
+                    container.quantity += form.cleaned_data['quantity']
+                    container.save(update_fields=['quantity'])
             else:
-                container.quantity += form.cleaned_data['quantity']
-                container.save(update_fields=['quantity'])
+                messages.add_message(request, messages.ERROR,
+                                     'Количество товара в контейнере не может быть больше количества товара по заявке')
         else:
-            messages.add_message(request, messages.ERROR,
-                                 'Количество товара в контейнере не может быть больше количества товара по заявке')
+            messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
     else:
-        messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
+        messages.add_message(request, messages.ERROR, 'Данная позиция ещё не упакована')
 
     return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
@@ -253,8 +268,8 @@ class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.L
 
     def get_queryset(self):
         today = timezone.now()
-        date = timezone.datetime(today.year, today.month, today.day, BID_TIME.get('hour'), BID_TIME.get('minute'),
-                                 BID_TIME.get('second'), BID_TIME.get('millisecond'), timezone.get_current_timezone())
+        date = timezone.datetime(year=today.year, month=today.month, day=today.day,
+                                 tzinfo=timezone.get_current_timezone(), **BID_TIME)
 
         return Order.objects.filter(
             status__in=(Order.PROCESSED, Order.ASSEMBLED), created__lte=date

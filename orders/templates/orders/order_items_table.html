@@ -3,28 +3,30 @@
     <tr>
         <th scope="col">Наименование</th>
         <th scope="col">Цена, руб.</th>
-        <th scope="col">Количество</th>
+        <th scope="col">Кол-во</th>
         <th scope="col">Сумма, руб.</th>
         <th scope="col">Контейнеры</th>
+        <th scope="col">Упак.</th>
     </tr>
     </thead>
     {% for line in order.items.all %}
         <tr>
-            <td>{{ line.product.name }}</td>
+            <td>{{ line.product }}</td>
             <td>{{ line.price }}</td>
             <td>{{ line.quantity }} {{ line.product.unit }}</td>
             <td>{{ line.get_cost }}</td>
             <td>
                 {% for container in line.containers.all %}
-                    <p>№{{ container.number }} - {{ container.quantity }} {{ line.product.unit.short_name }}</p>
+                    <p>№{{ container }} - {{ container.quantity }} {{ line.product.unit }}</p>
                 {% empty %}
-                    <p>Контейнеров не найдено</p>
+                    <p>Контейнеры отсутствуют</p>
                 {% endfor %}
                 {% if perms.accounts.is_sorter %}
                     <a class="btn btn-warning" href="{% url 'orders:order_item_containers' order.id line.id %}"
                        role="button">Изменить</a>
                 {% endif %}
             </td>
+            <td>{{ line.packed_to_str }}</td>
         </tr>
     {% endfor %}
 </table>

@@ -18,19 +18,18 @@
 
             <div class="row">
                 <div class="col-4">
-                    <h3>Заявка № {{ order.id }}</h3>
+                    <h3>{{ order }}</h3>
                 </div>
                 <div class="col-8">
-                    <p class="h5">Торговый объект: {{ order.user.shop }}</p>
-                    <p class="h5">Дата создания: {{ order.created }}</p>
-                    <p class="h5">Дата комплектровки: {{ order.assembled|default_if_none:"Нет" }}</p>
-                    <p class="h5">Дата отгрузки: {{ order.shipped|default_if_none:"Нет" }}</p>
+                    <p class="h5"><strong>Торговый объект:</strong> {{ order.user.shop }}</p>
+                    <p class="h5"><strong>Дата создания:</strong> {{ order.created }}</p>
+                    <p class="h5"><strong>Дата комплектровки:</strong> {{ order.assembled|default_if_none:"Нет" }}</p>
+                    <p class="h5"><strong>Дата отгрузки:</strong> {{ order.shipped|default_if_none:"Нет" }}</p>
                 </div>
             </div>
-            <h4>Товары: </h4>
+            <p class="h4">Товары: </p>
             {% include 'orders/order_items_table.html' %}
-            <br>
-            <h3>Итого по заказу: {{ order.get_total_cost }} руб.</h3>
+            <p class="h3">Итого по заявке: {{ order.get_total_cost }} руб.</p>
         {% endblock %}
         <hr>
         {% block order_view_footer %}{% endblock %}

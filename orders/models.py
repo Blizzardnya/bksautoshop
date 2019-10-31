@@ -106,6 +106,9 @@ class OrderItem(models.Model):
     def __str__(self):
         return self.product.name
 
+    def packed_to_str(self):
+        return 'Да' if self.packed else 'Нет'
+
     get_cost.short_description = 'Стоимость'
 
 

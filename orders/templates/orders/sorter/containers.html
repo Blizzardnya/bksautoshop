@@ -15,54 +15,58 @@
                 </div>
             {% endfor %}
         {% endif %}
-
-        <p class="h5"><strong>{{ order_item.order }}</strong></p>
-        <p class="h5"><strong>Товар:</strong> {{ order_item.product.name }}</p>
-        <p class="h5"><strong>Количество в заявке:</strong> {{ order_item.quantity }} {{ order_item.product.unit }}</p>
-        <h5>Список контейнеров:</h5>
-        <ul class="list-group col-xl-6 col-md-12">
-            {% for item in containers %}
-                <li class="list-group-item">
-                    <form action="{% url 'orders:update_container' order_id order_item.id item.container.id %}"
-                          method="post">
-                        {% csrf_token %}
-                        <div class="form-row">
-                            <div class="col-6">
-                                {{ item.form.container_number|as_crispy_field }}
-                            </div>
-                            <div class="col-6">
-                                {{ item.form.quantity|as_crispy_field }}
-                            </div>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <input type="submit" value="Обновить" class="btn btn-warning">
-                            <a href="{% url 'orders:delete_container' order_id order_item.id item.container.id %}"
-                               class="btn btn-danger" role="button">Удалить</a>
-                        </div>
-                    </form>
-                </li>
-                {% if forloop.counter|divisibleby:"6" %}
-                    </ul>
-                    <ul class="list-group col-xl-6 col-md-12">
-                {% endif %}
-            {% empty %}
-                <p>Список контейнеров пуст</p>
-            {% endfor %}
-            </ul>
-        <hr>
-        <p class="h5">Добавить контейнер:</p>
-        <form action="{% url 'orders:add_container' order_id order_item.id %}" method="post">
-            {% csrf_token %}
-            <div class="form-row">
-                <div class="col-6">
-                    {{ add_container_form.container_number|as_crispy_field }}
-                </div>
-                <div class="col-6">
-                    {{ add_container_form.quantity|as_crispy_field }}
-                </div>
+        <div class="card">
+            <h5 class="card-header">{{ order_item.order }}</h5>
+            <div class="card-body">
+                <p class="card-text h5"><strong>Товар:</strong> {{ order_item.product }}</p>
+                <p class="card-text h5"><strong>Количество в заявке:</strong> {{ order_item.quantity }} {{ order_item.product.unit }}</p>
+                <p class="card-text h5"><strong>Количество в контейнерах:</strong> {{ order_item.get_total_quantity_in_containers }} {{ order_item.product.unit }}</p>
+                <p class="card-text">Список контейнеров:</p>
             </div>
-            <input type="submit" value="Добавить" class="btn btn-success">
-        </form>
+            <ul class="list-group list-group-flush">
+                {% for item in containers %}
+                    <li class="list-group-item">
+                        <form action="{% url 'orders:update_container' order_id order_item.id item.container.id %}"
+                              method="post">
+                            {% csrf_token %}
+                            <div class="form-row">
+                                <div class="col-6">
+                                    {{ item.form.container_number|as_crispy_field }}
+                                </div>
+                                <div class="col-6">
+                                    {{ item.form.quantity|as_crispy_field }}
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <input type="submit" value="Обновить" class="btn btn-warning">
+                                <a href="{% url 'orders:delete_container' order_id order_item.id item.container.id %}"
+                                   class="btn btn-danger" role="button">Удалить</a>
+                            </div>
+                        </form>
+                    </li>
+                {% empty %}
+                    <li class="list-group-item">
+                        <p class="card-text">Список контейнеров пуст</p>
+                    </li>
+                {% endfor %}
+            </ul>
+            <div class="card-body">
+                <p class="card-text h5">Добавить контейнер:</p>
+                <form action="{% url 'orders:add_container' order_id order_item.id %}" method="post">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="col-6">
+                            {{ add_container_form.container_number|as_crispy_field }}
+                        </div>
+                        <div class="col-6">
+                            {{ add_container_form.quantity|as_crispy_field }}
+                        </div>
+                    </div>
+                    <input type="submit" value="Добавить" class="btn btn-success"
+                            {% if not order_item.packed %} disabled {% endif %}>
+                </form>
+            </div>
+        </div>
         <hr>
         <a class="btn btn-primary" href="{% url 'orders:sorter_view_order' order_id %}" role="button">Назад</a>
     </div>

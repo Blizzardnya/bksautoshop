@@ -19,10 +19,10 @@ urlpatterns = [
         path('', views.SorterOrderListView.as_view(), name='sorter_list_orders'),
         path('<int:pk>/', include([
             path('', views.SorterOrderView.as_view(), name='sorter_view_order'),
-            path('add_container/', views.set_order_container, name='add_container_order'),
+            path('add_container/', views.set_container_to_order, name='add_container_order'),
             path('<int:order_item_id>/', include([
                 path('', views.view_order_item_containers, name='order_item_containers'),
-                path('containers/add/', views.create_container, name='add_container'),
+                path('containers/add/', views.set_container_to_order_item, name='add_container'),
                 path('<int:container_id>/update/', views.update_container, name='update_container'),
                 path('<int:container_id>/delete/', views.delete_container, name='delete_container'),
             ])),

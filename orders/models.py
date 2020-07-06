@@ -12,6 +12,18 @@ except (ImportError, ModuleNotFoundError):
     from bksautoshop.prod_settings import BID_TIME
 
 
+class PackerOrderManager(models.Manager):
+    def get_queryset(self):
+        today = timezone.now()
+        date = timezone.datetime(year=today.year, month=today.month, day=today.day,
+                                 tzinfo=timezone.get_current_timezone(), **BID_TIME)
+
+        weight_units = Unit.objects.filter(type=Unit.WEIGHT)
+        items = Count('items', filter=Q(items__product__unit__in=weight_units, items__packed=False))
+        return super().get_queryset().annotate(items_count=items).filter(status=Order.PROCESSED, created__lte=date,
+                                                                         items_count__gt=0)
+
+
 class Order(models.Model):
     """ Модель заявки """
     user = models.ForeignKey(ShopUser, verbose_name="Пользователь", on_delete=models.CASCADE)
@@ -39,6 +51,8 @@ class Order(models.Model):
     }
 
     status = models.CharField("Статус", max_length=1, choices=ORDER_STATUS, default=NEW)
+    objects = models.Manager()
+    orders_for_packer = PackerOrderManager()
 
     class Meta:
         ordering = ('-created',)
@@ -51,17 +65,6 @@ class Order(models.Model):
     def get_items_for_packer(self):
         weight_units = Unit.objects.filter(type=Unit.WEIGHT)
         return self.items.filter(product__unit__in=weight_units, packed=False)
-
-    @staticmethod
-    def get_orders_for_packer():
-        today = timezone.now()
-        date = timezone.datetime(year=today.year, month=today.month, day=today.day,
-                                 tzinfo=timezone.get_current_timezone(), **BID_TIME)
-
-        weight_units = Unit.objects.filter(type=Unit.WEIGHT)
-        items = Count('items', filter=Q(items__product__unit__in=weight_units, items__packed=False))
-        return Order.objects.annotate(items_count=items).filter(status=Order.PROCESSED, created__lte=date,
-                                                                items_count__gt=0)
 
     def get_status_color(self):
         return self.STATUS_COLORS.get(self.status)
@@ -77,7 +80,7 @@ class Order(models.Model):
             total_items_quantity += item.quantity
             total_containers_quantity += item.get_total_quantity_in_containers()
 
-        return True if total_items_quantity == total_containers_quantity else False
+        return total_items_quantity == total_containers_quantity
 
     def __str__(self):
         return f'Заявка №{self.id}'

@@ -10,10 +10,10 @@ from django.contrib.auth.decorators import login_required, permission_required
 
 @require_POST
 @permission_required('orders.add_order')
-def cart_add(request, product_id):
+def cart_add(request, product_id: int):
     """ Добавление товара в корзину """
     # next_path = request.POST.get('next', '/')
-    cart = Cart(request)
+    cart = Cart(request.session)
     product = get_object_or_404(Product, id=product_id)
     if product.unit.is_weight_type:
         form = CartAddWeightProductForm(request.POST)
@@ -28,9 +28,9 @@ def cart_add(request, product_id):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
-def cart_remove(request, product_id):
+def cart_remove(request, product_id: int):
     """ Удаление товара из корзины """
-    cart = Cart(request)
+    cart = Cart(request.session)
     product = get_object_or_404(Product, id=product_id)
     cart.remove(product)
     return redirect('cart:cart_detail')
@@ -38,7 +38,7 @@ def cart_remove(request, product_id):
 
 def cart_clear(request):
     """ Очистка корзины """
-    cart = Cart(request)
+    cart = Cart(request.session)
     cart.clear()
     return redirect('cart:cart_detail')
 
@@ -46,7 +46,7 @@ def cart_clear(request):
 @login_required()
 def cart_detail(request):
     """ Просмотр корзины """
-    cart = Cart(request)
+    cart = Cart(request.session)
     for item in cart:
         if item.get('product').unit.is_weight_type():
             item['update_quantity_form'] = CartAddWeightProductForm(initial={'quantity': item['quantity'],

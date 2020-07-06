@@ -4,8 +4,8 @@ from bid.models import Product
 
 
 class Cart(object):
-    def __init__(self, request):
-        self.session = request.session
+    def __init__(self, session):
+        self.session = session
         cart = self.session.get(settings.CART_SESSION_ID)
 
         if not cart:

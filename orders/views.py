@@ -1,46 +1,37 @@
-try:
-    from bksautoshop.local_settings import BID_TIME
-except (ImportError, ModuleNotFoundError):
-    from bksautoshop.prod_settings import BID_TIME
-
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.views import generic
 from django.views.decorators.http import require_POST
-from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import HttpResponseRedirect
 from django.urls import reverse
 
-from .models import Order, OrderItem, Container
 from cart.cart import Cart
 from accounts.models import ShopUser
-from .forms import ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm, \
-    ContainerPieceOrderItemAddFormDis, ContainerWeightOrderItemAddFormDis
+from .models import Order, OrderItem, Container
+from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm,
+                    ContainerPieceOrderItemAddFormDis, ContainerWeightOrderItemAddFormDis)
+from .services import (create_order_service, set_container_to_order_item_service, update_container_quantity_service,
+                       set_container_to_order_service, delete_container_service, set_order_as_packed_service,
+                       set_order_item_as_packed_service, set_order_as_shipped_service)
+from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException
 
 
 @login_required()
 @permission_required('orders.add_order')
 def create_order(request):
     """ Создание заявки """
-    cart = Cart(request)
-    shop_user = ShopUser.objects.get(user=request.user)
     if request.method == 'POST':
-        if len(cart) == 0:
-            messages.add_message(request, 40, 'Ваша корзина пуста.')
-            return render(request, 'orders/merchandiser/create.html')
-        order = Order.objects.create(user=shop_user)
+        cart = Cart(request.session)
 
-        for item in cart:
-            OrderItem.objects.create(
-                order=order,
-                product=item['product'],
-                price=item['price'],
-                quantity=item['quantity'],
-                packed=not item['product'].unit.is_weight_type())
-        cart.clear()
+        if len(cart) == 0:
+            messages.add_message(request, messages.ERROR, 'Ваша корзина пуста.')
+            return render(request, 'orders/merchandiser/create.html')
+
+        order = create_order_service(request.user, cart)
+
         return render(request, 'orders/merchandiser/created.html', context={'order': order})
     else:
         return render(request, 'orders/merchandiser/create.html')
@@ -60,10 +51,17 @@ class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, gen
         ).order_by('-created')
 
 
-class OrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
-    """ Просмотр заявки мерчендайзер и упаковщик """
+class MerchandiserOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
+    """ Просмотр заявки мерчендайзер """
     model = Order
     template_name = 'orders/merchandiser/view.html'
+    permission_required = 'orders.view_order'
+
+
+class PackerOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
+    """ Просмотр заявки упаковщик """
+    model = Order
+    template_name = 'orders/packer/view.html'
     permission_required = 'orders.view_order'
 
 
@@ -109,33 +107,14 @@ def view_order_item_containers(request, pk, order_item_id):
 @login_required()
 @require_POST
 @permission_required('accounts.is_sorter')
-def set_order_container(request, pk):
+def set_container_to_order(request, pk):
     """ Добавление контейнера для каждой строки заявки """
-    order = get_object_or_404(Order, id=pk)
     container_form = ContainerOrderAddForm(request.POST)
-    assembled_products = []
-    not_packed = []
 
     if container_form.is_valid():
-        for item in order.items.all():
-            if item.packed:
-                container_total_quantity = item.get_total_quantity_in_containers()
-
-                if container_total_quantity < item.quantity:
-                    container = Container.objects.filter(number=container_form.cleaned_data['container_number'],
-                                                         order_item=item).first()
-                    if not container:
-                        Container.objects.create(
-                            order_item=item,
-                            number=container_form.cleaned_data['container_number'],
-                            quantity=item.quantity - container_total_quantity)
-                    else:
-                        container.quantity = item.quantity
-                        container.save(update_fields=['quantity'])
-                else:
-                    assembled_products.append(item.product.name)
-            else:
-                not_packed.append(item.product.name)
+        assembled_products, not_packed = set_container_to_order_service(
+            pk, container_form.cleaned_data['container_number']
+        )
 
         if assembled_products:
             messages.add_message(request, messages.WARNING,
@@ -146,39 +125,25 @@ def set_order_container(request, pk):
 
         return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
-    messages.add_message(request, 40, 'Контейнер не указан')
+    messages.add_message(request, messages.ERROR, 'Контейнер не указан')
     return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
 
 @login_required()
 @require_POST
 @permission_required('accounts.is_sorter')
-def create_container(request, pk, order_item_id):
-    """ Добавление контейнера """
-    order_item = get_object_or_404(OrderItem, id=order_item_id)
+def set_container_to_order_item(request, pk, order_item_id):
+    """ Добавление контейнера к строке заявки"""
     form = ContainerWeightOrderItemAddForm(request.POST)
-    if order_item.packed:
-        if form.is_valid():
-            containers_total_quantity = order_item.get_total_quantity_in_containers()
-            if order_item.quantity >= containers_total_quantity + form.cleaned_data['quantity']:
-                container = Container.objects.filter(number=form.cleaned_data['container_number'],
-                                                     order_item=order_item).first()
-                if not container:
-                    Container.objects.create(
-                        order_item=order_item,
-                        number=form.cleaned_data['container_number'],
-                        quantity=form.cleaned_data['quantity']
-                    )
-                else:
-                    container.quantity += form.cleaned_data['quantity']
-                    container.save(update_fields=['quantity'])
-            else:
-                messages.add_message(request, messages.ERROR,
-                                     'Количество товара в контейнере не может быть больше количества товара по заявке')
-        else:
-            messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
+
+    if form.is_valid():
+        try:
+            set_container_to_order_item_service(form.cleaned_data['container_number'], order_item_id,
+                                                form.cleaned_data['quantity'])
+        except (ContainerOverflowException, NotPackedException) as err:
+            messages.add_message(request, messages.ERROR, str(err))
     else:
-        messages.add_message(request, messages.ERROR, 'Данная позиция ещё не упакована')
+        messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
 
     return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
@@ -191,7 +156,7 @@ def update_container(request, pk, order_item_id, container_id):
     container = get_object_or_404(Container, id=container_id)
     order_item = container.order_item
 
-    if container.order_item.product.unit.is_weight_type():
+    if order_item.product.unit.is_weight_type():
         form = ContainerWeightOrderItemAddFormDis(request.POST)
     else:
         form = ContainerPieceOrderItemAddFormDis(request.POST)
@@ -200,8 +165,7 @@ def update_container(request, pk, order_item_id, container_id):
         containers_total_quantity = order_item.get_total_quantity_in_containers()
 
         if order_item.quantity >= containers_total_quantity - container.quantity + form.cleaned_data['quantity']:
-            container.quantity = form.cleaned_data['quantity']
-            container.save(update_fields=['quantity'])
+            update_container_quantity_service(container, form.cleaned_data['quantity'], False)
             messages.add_message(request, messages.SUCCESS, 'Контейнер обновлён')
         else:
             messages.add_message(request, messages.ERROR,
@@ -216,8 +180,7 @@ def update_container(request, pk, order_item_id, container_id):
 @permission_required('accounts.is_sorter')
 def delete_container(request, pk, order_item_id, container_id):
     """ Удаление контейнера """
-    container = get_object_or_404(Container, id=container_id)
-    container.delete()
+    delete_container_service(container_id)
     return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
 
@@ -225,7 +188,7 @@ def delete_container(request, pk, order_item_id, container_id):
 @permission_required('accounts.is_packer')
 def packer_product_list(request):
     """ Просмотр списка заявок для упаковщика """
-    orders_list = Order.get_orders_for_packer()
+    orders_list = Order.orders_for_packer.all()
 
     paginator = Paginator(orders_list, 12)
     page = request.GET.get('page')
@@ -236,25 +199,17 @@ def packer_product_list(request):
 
 @login_required()
 @permission_required('accounts.is_packer')
-def set_order_as_packed(request, order_id):
-    """ Пометить строку заявку с весовым товаром как упакованную """
-    order = get_object_or_404(Order, id=order_id)
-
-    for item in order.items.filter(packed=False):
-        item.packed = True
-        item.save(update_fields=['packed'])
-
+def set_order_as_packed(request, pk):
+    """ Пометить заявку с весовым товаром как упакованную """
+    set_order_as_packed_service(pk)
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 @login_required()
 @permission_required('accounts.is_packer')
 def set_order_item_as_packed(request, order_item_id):
-    """ Пометить все строки заявки с весовым товаром как упакованные """
-    order_item = get_object_or_404(OrderItem, id=order_item_id)
-    order_item.packed = True
-    order_item.save(update_fields=['packed'])
-
+    """ Пометить строку заявки с весовым товаром как упакованную """
+    set_order_item_as_packed_service(order_item_id)
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
@@ -267,26 +222,17 @@ class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.L
     permission_required = 'accounts.is_sorter'
 
     def get_queryset(self):
-        today = timezone.now()
-        date = timezone.datetime(year=today.year, month=today.month, day=today.day,
-                                 tzinfo=timezone.get_current_timezone(), **BID_TIME)
-
-        return Order.objects.filter(
-            status__in=(Order.PROCESSED, Order.ASSEMBLED), created__lte=date
-        ).order_by('-created')
+        return Order.orders_for_sorter.order_by('-created')
 
 
 @login_required()
 @permission_required('accounts.is_sorter')
 def set_order_as_shipped(request, pk):
     """ Изменение статуса заявки на отправлено """
-    order = get_object_or_404(Order, id=pk)
+    try:
+        set_order_as_shipped_service(pk)
+    except NotSortedException as err:
+        messages.add_message(request, messages.ERROR, str(err))
+        return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
-    if order.status == Order.PROCESSED:
-        messages.add_message(request, 40, 'Заявка всё ещё не укомплектована')
-        return HttpResponseRedirect(reverse('orders:view_order', args=[pk]))
-
-    order.status = Order.SHIPPED
-    order.shipped = timezone.now()
-    order.save()
-    return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
+    return HttpResponseRedirect(reverse('orders:sorter_list_orders'))

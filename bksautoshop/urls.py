@@ -15,7 +15,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,6 +25,5 @@ urlpatterns = [
         path('', include('django.contrib.auth.urls')),
     ])),
     path('', include('bid.urls')),
-    # path('', RedirectView.as_view(url='/bid/', permanent=True)),
     path('nested_admin/', include('nested_admin.urls')),
 ]

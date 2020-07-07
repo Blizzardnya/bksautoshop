@@ -21,7 +21,7 @@
                 {% empty %}
                     <p>Контейнеры отсутствуют</p>
                 {% endfor %}
-                {% if perms.accounts.is_sorter %}
+                {% if perms.accounts.is_sorter and not order.status == order.SHIPPED %}
                     <a class="btn btn-warning" href="{% url 'orders:order_item_containers' order.id line.id %}"
                        role="button">Изменить</a>
                 {% endif %}

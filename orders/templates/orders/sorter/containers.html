@@ -37,11 +37,13 @@
                                     {{ item.form.quantity|as_crispy_field }}
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <input type="submit" value="Обновить" class="btn btn-warning">
-                                <a href="{% url 'orders:delete_container' order_id order_item.id item.container.id %}"
-                                   class="btn btn-danger" role="button">Удалить</a>
-                            </div>
+                            {% if not order_item.order.status == order_item.order.SHIPPED %}
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <input type="submit" value="Обновить" class="btn btn-warning">
+                                    <a href="{% url 'orders:delete_container' order_id order_item.id item.container.id %}"
+                                       class="btn btn-danger" role="button">Удалить</a>
+                                </div>
+                            {% endif %}
                         </form>
                     </li>
                 {% empty %}
@@ -50,22 +52,24 @@
                     </li>
                 {% endfor %}
             </ul>
-            <div class="card-body">
-                <p class="card-text h5">Добавить контейнер:</p>
-                <form action="{% url 'orders:add_container' order_id order_item.id %}" method="post">
-                    {% csrf_token %}
-                    <div class="form-row">
-                        <div class="col-6">
-                            {{ add_container_form.container_number|as_crispy_field }}
+            {% if not order_item.order.status == order_item.order.SHIPPED %}
+                <div class="card-body">
+                    <p class="card-text h5">Добавить контейнер:</p>
+                    <form action="{% url 'orders:add_container' order_id order_item.id %}" method="post">
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="col-6">
+                                {{ add_container_form.container_number|as_crispy_field }}
+                            </div>
+                            <div class="col-6">
+                                {{ add_container_form.quantity|as_crispy_field }}
+                            </div>
                         </div>
-                        <div class="col-6">
-                            {{ add_container_form.quantity|as_crispy_field }}
-                        </div>
-                    </div>
-                    <input type="submit" value="Добавить" class="btn btn-success"
-                            {% if not order_item.packed %} disabled {% endif %}>
-                </form>
-            </div>
+                        <input type="submit" value="Добавить" class="btn btn-success"
+                                {% if not order_item.packed %} disabled {% endif %}>
+                    </form>
+                </div>
+            {% endif %}
         </div>
         <hr>
         <a class="btn btn-primary" href="{% url 'orders:sorter_view_order' order_id %}" role="button">Назад</a>

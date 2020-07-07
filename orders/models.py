@@ -1,27 +1,29 @@
 from django.db import models
 from django.urls import reverse
-from django.utils import timezone
 from django.db.models import Count, Q
 
 from accounts.models import ShopUser
 from bid.models import Product, Unit
-
-try:
-    from bksautoshop.local_settings import BID_TIME
-except (ImportError, ModuleNotFoundError):
-    from bksautoshop.prod_settings import BID_TIME
+from .utils import get_today_process_bid_datetime
 
 
 class PackerOrderManager(models.Manager):
     def get_queryset(self):
-        today = timezone.now()
-        date = timezone.datetime(year=today.year, month=today.month, day=today.day,
-                                 tzinfo=timezone.get_current_timezone(), **BID_TIME)
+        date = get_today_process_bid_datetime()
 
         weight_units = Unit.objects.filter(type=Unit.WEIGHT)
         items = Count('items', filter=Q(items__product__unit__in=weight_units, items__packed=False))
         return super().get_queryset().annotate(items_count=items).filter(status=Order.PROCESSED, created__lte=date,
                                                                          items_count__gt=0)
+
+
+class SorterOrderManager(models.Manager):
+    def get_queryset(self):
+        date = get_today_process_bid_datetime()
+
+        return super().get_queryset().filter(
+            status__in=(Order.PROCESSED, Order.ASSEMBLED), created__lte=date
+        )
 
 
 class Order(models.Model):
@@ -53,6 +55,7 @@ class Order(models.Model):
     status = models.CharField("Статус", max_length=1, choices=ORDER_STATUS, default=NEW)
     objects = models.Manager()
     orders_for_packer = PackerOrderManager()
+    orders_for_sorter = SorterOrderManager()
 
     class Meta:
         ordering = ('-created',)

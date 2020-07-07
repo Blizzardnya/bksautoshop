@@ -2,10 +2,11 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 
 from accounts.models import ShopUser
 from .models import Order, OrderItem, Container
-from .exceptions import NotPackedException, ContainerOverflowException
+from .exceptions import NotPackedException, ContainerOverflowException, NotSortedException
 from cart.cart import Cart
 
 
@@ -101,3 +102,71 @@ def set_container_to_order_service(order_id: int, container_number: int):
             not_packed.append(item.product.name)
 
     return assembled_products, not_packed
+
+
+def delete_container_service(container_id: int) -> None:
+    """
+    Удаление контейнера
+    :param container_id: Идентификатор контейнера
+    """
+    container = get_object_or_404(Container, id=container_id)
+    container.delete()
+
+
+def change_order_item_packed_state(order_item: OrderItem, packed_state: bool) -> None:
+    """
+    Изменение состояния упаковки строки заявки
+    :param order_item: Строка заявки
+    :param packed_state: Состояние
+    """
+    order_item.packed = packed_state
+    order_item.save(update_fields=['packed'])
+
+
+def set_order_as_packed_service(order_id: int) -> None:
+    """
+    Пометить заявку с весовым товаром как упакованную
+    :param order_id: Идентификатор заявки
+    """
+    order = get_object_or_404(Order, id=order_id)
+
+    for item in order.items.filter(packed=False):
+        change_order_item_packed_state(item, True)
+
+
+def set_order_item_as_packed_service(order_item_id: int) -> None:
+    """
+    Пометить строку заявки с весовым товаром как упакованную
+    :param order_item_id: Идентификатор строки завки
+    """
+    order_item = get_object_or_404(OrderItem, id=order_item_id)
+    change_order_item_packed_state(order_item, True)
+
+
+def changer_order_status_service(order: Order, status: Order.ORDER_STATUS) -> None:
+    """
+    Изменение статуса заявки
+    :param order: Заявка
+    :param status: Статус
+    """
+    order.status = status
+
+    if status == Order.ASSEMBLED:
+        order.assembled = timezone.now()
+    elif status == Order.SHIPPED:
+        order.shipped = timezone.now()
+
+    order.save()
+
+
+def set_order_as_shipped_service(order_id: int) -> None:
+    """
+    Пометить заявку как отправленную
+    :param order_id: Идентификатор заявки
+    """
+    order = get_object_or_404(Order, id=order_id)
+
+    if order.status == Order.PROCESSED:
+        raise NotSortedException
+
+    changer_order_status_service(order, Order.SHIPPED)

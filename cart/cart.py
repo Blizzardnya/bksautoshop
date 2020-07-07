@@ -1,5 +1,7 @@
 from decimal import Decimal
+
 from django.conf import settings
+
 from bid.models import Product
 
 
@@ -12,7 +14,7 @@ class Cart(object):
             cart = self.session[settings.CART_SESSION_ID] = {}
         self.cart = cart
 
-    def add(self, product, quantity=1, update_quantity=False):
+    def add(self, product: Product, quantity: int = 1, update_quantity: bool = False):
         """
         Метод добавления товара в корзину
         :param product: Товар
@@ -33,7 +35,7 @@ class Cart(object):
         self.session[settings.CART_SESSION_ID] = self.cart
         self.session.modified = True
 
-    def remove(self, product):
+    def remove(self, product: Product):
         """
         Метод удаление товара из корзины
         :param product: Товар

@@ -1,15 +1,9 @@
-try:
-    from bksautoshop.local_settings import BID_TIME
-except (ImportError, ModuleNotFoundError):
-    from bksautoshop.prod_settings import BID_TIME
-
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib import messages
 from django.views import generic
 from django.views.decorators.http import require_POST
-from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import HttpResponseRedirect
 from django.urls import reverse
@@ -20,8 +14,9 @@ from .models import Order, OrderItem, Container
 from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm,
                     ContainerPieceOrderItemAddFormDis, ContainerWeightOrderItemAddFormDis)
 from .services import (create_order_service, set_container_to_order_item_service, update_container_quantity_service,
-                       set_container_to_order_service)
-from .exceptions import ContainerOverflowException, NotPackedException
+                       set_container_to_order_service, delete_container_service, set_order_as_packed_service,
+                       set_order_item_as_packed_service, set_order_as_shipped_service)
+from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException
 
 
 @login_required()
@@ -32,7 +27,7 @@ def create_order(request):
         cart = Cart(request.session)
 
         if len(cart) == 0:
-            messages.add_message(request, 40, 'Ваша корзина пуста.')
+            messages.add_message(request, messages.ERROR, 'Ваша корзина пуста.')
             return render(request, 'orders/merchandiser/create.html')
 
         order = create_order_service(request.user, cart)
@@ -56,10 +51,17 @@ class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, gen
         ).order_by('-created')
 
 
-class OrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
-    """ Просмотр заявки мерчендайзер и упаковщик """
+class MerchandiserOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
+    """ Просмотр заявки мерчендайзер """
     model = Order
     template_name = 'orders/merchandiser/view.html'
+    permission_required = 'orders.view_order'
+
+
+class PackerOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
+    """ Просмотр заявки упаковщик """
+    model = Order
+    template_name = 'orders/packer/view.html'
     permission_required = 'orders.view_order'
 
 
@@ -123,7 +125,7 @@ def set_container_to_order(request, pk):
 
         return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
-    messages.add_message(request, 40, 'Контейнер не указан')
+    messages.add_message(request, messages.ERROR, 'Контейнер не указан')
     return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
 
@@ -178,8 +180,7 @@ def update_container(request, pk, order_item_id, container_id):
 @permission_required('accounts.is_sorter')
 def delete_container(request, pk, order_item_id, container_id):
     """ Удаление контейнера """
-    container = get_object_or_404(Container, id=container_id)
-    container.delete()
+    delete_container_service(container_id)
     return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
 
@@ -198,25 +199,17 @@ def packer_product_list(request):
 
 @login_required()
 @permission_required('accounts.is_packer')
-def set_order_as_packed(request, order_id):
-    """ Пометить строку заявки с весовым товаром как упакованную """
-    order = get_object_or_404(Order, id=order_id)
-
-    for item in order.items.filter(packed=False):
-        item.packed = True
-        item.save(update_fields=['packed'])
-
+def set_order_as_packed(request, pk):
+    """ Пометить заявку с весовым товаром как упакованную """
+    set_order_as_packed_service(pk)
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 @login_required()
 @permission_required('accounts.is_packer')
 def set_order_item_as_packed(request, order_item_id):
-    """ Пометить все строки заявки с весовым товаром как упакованные """
-    order_item = get_object_or_404(OrderItem, id=order_item_id)
-    order_item.packed = True
-    order_item.save(update_fields=['packed'])
-
+    """ Пометить строку заявки с весовым товаром как упакованную """
+    set_order_item_as_packed_service(order_item_id)
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
@@ -229,26 +222,17 @@ class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.L
     permission_required = 'accounts.is_sorter'
 
     def get_queryset(self):
-        today = timezone.now()
-        date = timezone.datetime(year=today.year, month=today.month, day=today.day,
-                                 tzinfo=timezone.get_current_timezone(), **BID_TIME)
-
-        return Order.objects.filter(
-            status__in=(Order.PROCESSED, Order.ASSEMBLED), created__lte=date
-        ).order_by('-created')
+        return Order.orders_for_sorter.order_by('-created')
 
 
 @login_required()
 @permission_required('accounts.is_sorter')
 def set_order_as_shipped(request, pk):
     """ Изменение статуса заявки на отправлено """
-    order = get_object_or_404(Order, id=pk)
+    try:
+        set_order_as_shipped_service(pk)
+    except NotSortedException as err:
+        messages.add_message(request, messages.ERROR, str(err))
+        return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
-    if order.status == Order.PROCESSED:
-        messages.add_message(request, 40, 'Заявка всё ещё не укомплектована')
-        return HttpResponseRedirect(reverse('orders:view_order', args=[pk]))
-
-    order.status = Order.SHIPPED
-    order.shipped = timezone.now()
-    order.save()
-    return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
+    return HttpResponseRedirect(reverse('orders:sorter_list_orders'))

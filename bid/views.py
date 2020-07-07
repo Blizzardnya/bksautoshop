@@ -1,28 +1,16 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.http import require_POST
-from django.db.models import Q
-from django.contrib.postgres.search import SearchVector
-from django.core.exceptions import ObjectDoesNotExist
 
-from .models import Category, Product
-from orders.models import Order
-from accounts.models import ShopUser
-from .forms import SearchForm
 from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
+from .forms import SearchForm
+from .services import get_product_list_service, search_products_service, get_user_last_orders
 
 
 def index(request):
     """ Главная страница приложения """
-    last_orders = []
-
-    if request.user.is_authenticated:
-        try:
-            last_orders = Order.objects.filter(user=ShopUser.objects.get(user=request.user)).order_by('-created')[:3]
-        except (IndexError, ObjectDoesNotExist):
-            pass
-
+    last_orders = get_user_last_orders(request.user, 3)
     return render(request, 'bid/index.html', {'last_orders': last_orders})
 
 
@@ -30,18 +18,7 @@ def index(request):
 @permission_required('accounts.is_merchandiser')
 def product_list(request, category_slug=None):
     """ Просмотр списка товаров """
-    shop_user = ShopUser.objects.get(user=request.user)
-    category = None
-    categories = Category.objects.filter(root_category=None)
-    products_list = Product.objects.filter(matrix=shop_user.shop.product_matrix)
-
-    if category_slug:
-        category = get_object_or_404(Category, slug=category_slug)
-        categories = Category.objects.filter(root_category=category)
-        products_list = Product.objects.filter(
-            Q(category=category) | Q(category__in=categories),
-            matrix=shop_user.shop.product_matrix
-        )
+    category, categories, products_list = get_product_list_service(request.user, category_slug)
 
     paginator = Paginator(products_list, 12)
     page = request.GET.get('page')
@@ -74,9 +51,7 @@ def prepare_search(request):
 
 def search_results(request, word):
     """ Поиск товаров по ключевому слову"""
-    shop_user = ShopUser.objects.get(user=request.user)
-    search_products = Product.objects.annotate(search=SearchVector('barcode', 'name'))\
-                                     .filter(search=word, matrix=shop_user.shop.product_matrix)
+    search_products = search_products_service(request.user, word)
 
     context = {
         'key_word': word,

@@ -1,0 +1,5 @@
+{% extends "orders/base_view.html" %}
+
+{% block order_view_footer %}
+    <a class="btn btn-primary" href="{% url 'orders:packer_list_orders' %}" role="button">Назад</a>
+{% endblock %}

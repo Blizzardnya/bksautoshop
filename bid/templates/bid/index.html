@@ -27,7 +27,7 @@
                     {% for item in last_orders %}
                         <li class="list-group-item">
                             <div class="d-flex justify-content-between align-items-center">
-                                <a class="h4" href="{% url 'orders:view_order' item.id %}" role="button">
+                                <a class="h4" href="{% url 'orders:merchandiser_view_order' item.id %}" role="button">
                                     {{ item }} - Итого: {{ item.get_total_cost }}
                                 </a>
                                 <h4>

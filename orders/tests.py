@@ -3,12 +3,11 @@ from django.contrib.auth.models import User
 
 from accounts.models import ShopUser
 from bid.models import Product, Category, Unit, ProductMatrix
+from cart.cart import Cart
 from .models import Order, OrderItem, Container
 from .services import (set_order_as_shipped_service, set_order_as_packed_service, set_order_item_as_packed_service,
-                       set_container_to_order_item_service)
+                       set_container_to_order_item_service, create_order_service)
 from .exceptions import NotPackedException
-
-# Create your tests here.
 
 
 class OrderTestCase(TestCase):
@@ -29,8 +28,8 @@ class OrderTestCase(TestCase):
         self.test_product_2.matrix.add(test_matrix)
 
         # Создание пользователя
-        test_user = User.objects.create_user('john', 'lennon@thebeatles.com', 'johnpassword')
-        test_shop_user = ShopUser.objects.create(user=test_user, phone=None)
+        self.test_user = User.objects.create_user('john', 'lennon@thebeatles.com', 'johnpassword')
+        test_shop_user = ShopUser.objects.create(user=self.test_user, phone=None)
 
         # Создание заявки
         self.test_order_1 = Order.objects.create(user=test_shop_user)
@@ -66,3 +65,10 @@ class OrderTestCase(TestCase):
         set_container_to_order_item_service(2, self.test_order_item_2.id, self.test_order_item_2.quantity)
         container = Container.objects.get(order_item=self.test_order_item_2)
         self.assertIsNotNone(container)
+
+    def test_create_order_service(self):
+        cart = Cart(self.client.session)
+        cart.add(self.test_product_1, 2)
+        create_order_service(self.test_user, cart)
+        self.assertEqual(Order.objects.count(), 2)
+        self.assertEqual(OrderItem.objects.count(), 3)

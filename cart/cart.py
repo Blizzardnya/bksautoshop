@@ -5,7 +5,7 @@ from django.conf import settings
 from bid.models import Product
 
 
-class Cart(object):
+class Cart:
     def __init__(self, session):
         self.session = session
         cart = self.session.get(settings.CART_SESSION_ID)
@@ -58,6 +58,7 @@ class Cart(object):
             yield item
 
     def __len__(self):
+        """ Количество товаров в корзине """
         return len(self.cart.values())
 
     def get_total_price(self):
@@ -65,7 +66,6 @@ class Cart(object):
         return round(sum(Decimal(item['price']) * Decimal(item['quantity']) for item in self.cart.values()), 2)
 
     def clear(self):
-        """
-        Метод удаления корзины из сессии """
+        """ Метод удаления корзины из сессии """
         del self.session[settings.CART_SESSION_ID]
         self.session.modified = True

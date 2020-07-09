@@ -26,7 +26,7 @@ class Unit(models.Model):
         return self.short_name
 
     def is_weight_type(self):
-        return True if self.type == self.WEIGHT else False
+        return self.type == self.WEIGHT
 
 
 class ProductMatrix(models.Model):

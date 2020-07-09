@@ -9,7 +9,7 @@ from accounts.models import ShopUser
 from orders.models import Order
 
 
-def get_product_list_service(user: User, category_slug: str):
+def get_product_list_service(user: User, category_slug: str = None):
     """
     Получени товаров на основании категории
     :param user: Пользователь

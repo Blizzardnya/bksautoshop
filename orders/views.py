@@ -5,14 +5,15 @@ from django.contrib import messages
 from django.views import generic
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
+from django.db.utils import Error
 
 from cart.cart import Cart
 from accounts.models import ShopUser
 from .models import Order, OrderItem, Container
 from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm,
-                    ContainerPieceOrderItemAddFormDis, ContainerWeightOrderItemAddFormDis)
+                    ContainerPieceOrderItemAddFormDisabled, ContainerWeightOrderItemAddFormDisabled)
 from .services import (create_order_service, set_container_to_order_item_service, update_container_quantity_service,
                        set_container_to_order_service, delete_container_service, set_order_as_packed_service,
                        set_order_item_as_packed_service, set_order_as_shipped_service)
@@ -29,8 +30,10 @@ def create_order(request):
         if len(cart) == 0:
             messages.add_message(request, messages.ERROR, 'Ваша корзина пуста.')
             return render(request, 'orders/merchandiser/create.html')
-
-        order = create_order_service(request.user, cart)
+        try:
+            order = create_order_service(request.user, cart)
+        except Error:
+            return HttpResponse(status=500)
 
         return render(request, 'orders/merchandiser/created.html', context={'order': order})
     else:
@@ -83,11 +86,11 @@ def view_order_item_containers(request, pk, order_item_id):
     """ Просмотр контейнеров для определённой позиции в заявке """
     order_item = get_object_or_404(OrderItem, id=order_item_id)
     containers = [{'container': container,
-                   'form': ContainerWeightOrderItemAddFormDis(initial={
+                   'form': ContainerWeightOrderItemAddFormDisabled(initial={
                        'container_number': container.number,
                        'quantity': container.quantity
                    }) if container.order_item.product.unit.is_weight_type() else
-                   ContainerPieceOrderItemAddFormDis(initial={
+                   ContainerPieceOrderItemAddFormDisabled(initial={
                        'container_number': container.number,
                        'quantity': int(container.quantity)
                    })} for container in order_item.containers.all()]
@@ -157,9 +160,9 @@ def update_container(request, pk, order_item_id, container_id):
     order_item = container.order_item
 
     if order_item.product.unit.is_weight_type():
-        form = ContainerWeightOrderItemAddFormDis(request.POST)
+        form = ContainerWeightOrderItemAddFormDisabled(request.POST)
     else:
-        form = ContainerPieceOrderItemAddFormDis(request.POST)
+        form = ContainerPieceOrderItemAddFormDisabled(request.POST)
 
     if form.is_valid():
         containers_total_quantity = order_item.get_total_quantity_in_containers()

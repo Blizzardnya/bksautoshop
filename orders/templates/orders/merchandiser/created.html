@@ -9,7 +9,7 @@
             <h3 class="page-header">Заявка успешно оформлена</h3>
             <p>Номер заявки: <strong>{{ order.id }}</strong>.</p>
             <a class="btn btn-primary" href="{% url 'bid:product_list' %}">Перейти к списку продуктов</a>
-            <a class="btn btn-primary" href="{% url 'orders:view_order' order.id %}">Посмотреть заявку</a>
+            <a class="btn btn-primary" href="{% url 'orders:merchandiser_view_order' order.id %}">Посмотреть заявку</a>
         </div>
         {#        </div>#}
     </div>

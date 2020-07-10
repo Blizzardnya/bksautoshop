@@ -1,13 +1,18 @@
+import logging
 from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.db import transaction
+from django.db.utils import Error
 
 from accounts.models import ShopUser
 from .models import Order, OrderItem, Container
 from .exceptions import NotPackedException, ContainerOverflowException, NotSortedException
 from cart.cart import Cart
+
+logger = logging.getLogger(__name__)
 
 
 def create_order_service(user: User, cart: Cart) -> Order:
@@ -18,16 +23,24 @@ def create_order_service(user: User, cart: Cart) -> Order:
     :return: Заявка
     """
     shop_user = ShopUser.objects.get(user=user)
-    order = Order.objects.create(user=shop_user)
+    try:
+        with transaction.atomic():
+            order = Order.objects.create(user=shop_user)
 
-    for item in cart:
-        OrderItem.objects.create(
-            order=order,
-            product=item['product'],
-            price=item['price'],
-            quantity=item['quantity'],
-            packed=not item['product'].unit.is_weight_type())
-    cart.clear()
+            for item in cart:
+                OrderItem.objects.create(
+                    order=order,
+                    product=item['product'],
+                    price=item['price'],
+                    quantity=item['quantity'],
+                    packed=not item['product'].unit.is_weight_type())
+
+            logger.info(f'Order №{str(order.id)} was created by user {shop_user}')
+
+        cart.clear()
+    except Error as err:
+        logger.error(f'Order was not created by user {shop_user}, error text: {str(err)}')
+        raise
 
     return order
 
@@ -169,4 +182,6 @@ def set_order_as_shipped_service(order_id: int) -> None:
     if order.status == Order.PROCESSED:
         raise NotSortedException
 
-    changer_order_status_service(order, Order.SHIPPED)
+    if order.status != Order.SHIPPED:
+        changer_order_status_service(order, Order.SHIPPED)
+        logger.info(f'Order №{str(order.id)} marked as shipped.')

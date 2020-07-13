@@ -1,5 +1,6 @@
+import logging
+
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchVector
 from django.core.exceptions import ObjectDoesNotExist
@@ -7,6 +8,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from .models import Category, Product
 from accounts.models import ShopUser
 from orders.models import Order
+
+logger = logging.getLogger(__name__)
 
 
 def get_product_list_service(user: User, category_slug: str = None):
@@ -16,19 +19,26 @@ def get_product_list_service(user: User, category_slug: str = None):
     :param category_slug: Категория
     :return: Головная категория, дочерние категории, товары
     """
-    shop_user = ShopUser.objects.get(user=user)
+    try:
+        shop_user = ShopUser.objects.get(user=user)
 
-    if category_slug:
-        category = get_object_or_404(Category, slug=category_slug)
-        categories = Category.objects.filter(root_category=category)
-        products_list = Product.objects.filter(
-            Q(category=category) | Q(category__in=categories),
-            matrix=shop_user.shop.product_matrix
-        )
-    else:
-        category = None
-        categories = Category.objects.filter(root_category=None)
-        products_list = Product.objects.filter(matrix=shop_user.shop.product_matrix)
+        if category_slug:
+            category = Category.objects.get(slug=category_slug)
+            categories = Category.objects.filter(root_category=category)
+            products_list = Product.objects.filter(
+                Q(category=category) | Q(category__in=categories),
+                matrix=shop_user.shop.product_matrix
+            )
+        else:
+            category = None
+            categories = Category.objects.filter(root_category=None)
+            products_list = Product.objects.filter(matrix=shop_user.shop.product_matrix)
+    except ShopUser.DoesNotExist:
+        logger.error(f'Пользователь магазина для {str(user)} не найден')
+        raise
+    except Category.DoesNotExist:
+        logger.error(f'Категория {category_slug} не найдена')
+        raise
 
     return category, categories, products_list
 
@@ -40,9 +50,13 @@ def search_products_service(user: User, word: str):
     :param word: Клчевое слово
     :return: Товары
     """
-    shop_user = ShopUser.objects.get(user=user)
-    search_products = Product.objects.annotate(search=SearchVector('barcode', 'name'))\
-                                     .filter(search=word, matrix=shop_user.shop.product_matrix)
+    try:
+        shop_user = ShopUser.objects.get(user=user)
+        search_products = Product.objects.annotate(search=SearchVector('barcode', 'name'))\
+                                         .filter(search=word, matrix=shop_user.shop.product_matrix)
+    except ShopUser.DoesNotExist:
+        logger.error(f'Пользователь магазина для {str(user)} не найден')
+        raise
 
     return search_products
 

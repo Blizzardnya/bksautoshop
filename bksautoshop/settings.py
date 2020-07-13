@@ -158,7 +158,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {funcName} {message}',
             'style': '{',
         },
         'simple': {
@@ -179,6 +179,12 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, 'logs', 'orders', f'{datetime.today().date()}.log'),
             'formatter': 'verbose',
         },
+        'bid_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'bid', f'{datetime.today().date()}.log'),
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
@@ -190,6 +196,10 @@ LOGGING = {
             'handlers': ['orders_file'],
             'level': 'INFO',
         },
+        'bid': {
+            'handlers': ['bid_file'],
+            'level': 'INFO',
+        }
     },
 }
 

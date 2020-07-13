@@ -5,7 +5,7 @@ from django.contrib import messages
 from django.views import generic
 from django.views.decorators.http import require_POST
 from django.core.paginator import Paginator
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 from django.db.utils import Error
 
@@ -33,7 +33,11 @@ def create_order(request):
         try:
             order = create_order_service(request.user, cart)
         except Error:
-            return HttpResponse(status=500)
+            messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
+            return render(request, 'orders/merchandiser/create.html')
+        except ShopUser.DoesNotExist:
+            messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+            return render(request, 'orders/merchandiser/create.html')
 
         return render(request, 'orders/merchandiser/created.html', context={'order': order})
     else:
@@ -102,9 +106,10 @@ def view_order_item_containers(request, pk, order_item_id):
     else:
         form = ContainerPieceOrderItemAddForm(initial={'quantity': int(order_item.quantity - quantity_in_containers)})
 
-    return render(request, 'orders/sorter/containers.html',
-                  context={'containers': containers, 'order_id': pk, 'order_item': order_item,
-                           'add_container_form': form})
+    return render(
+        request, 'orders/sorter/containers.html',
+        context={'containers': containers, 'order_id': pk, 'order_item': order_item, 'add_container_form': form}
+    )
 
 
 @login_required()
@@ -115,20 +120,22 @@ def set_container_to_order(request, pk):
     container_form = ContainerOrderAddForm(request.POST)
 
     if container_form.is_valid():
-        assembled_products, not_packed = set_container_to_order_service(
-            pk, container_form.cleaned_data['container_number']
-        )
+        try:
+            assembled_products, not_packed = set_container_to_order_service(
+                pk, container_form.cleaned_data['container_number']
+            )
 
-        if assembled_products:
-            messages.add_message(request, messages.WARNING,
-                                 f'Товары {assembled_products} укомплектованы в полном количестве')
+            if assembled_products:
+                messages.add_message(request, messages.WARNING,
+                                     f'Товары {assembled_products} укомплектованы в полном количестве')
 
-        if not_packed:
-            messages.add_message(request, messages.ERROR, f'Товары {not_packed} ещё не упакованы')
+            if not_packed:
+                messages.add_message(request, messages.ERROR, f'Товары {not_packed} ещё не упакованы')
+        except Order.DoesNotExist:
+            messages.add_message(request, messages.ERROR, f'Заявки с идентификатором {str(pk)} не существует')
+    else:
+        messages.add_message(request, messages.ERROR, 'Контейнер не указан')
 
-        return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
-
-    messages.add_message(request, messages.ERROR, 'Контейнер не указан')
     return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
 
@@ -145,6 +152,8 @@ def set_container_to_order_item(request, pk, order_item_id):
                                                 form.cleaned_data['quantity'])
         except (ContainerOverflowException, NotPackedException) as err:
             messages.add_message(request, messages.ERROR, str(err))
+        except OrderItem.DoesNotExist:
+            messages.add_message(request, messages.ERROR, f'В заявке нет строки с идентификатором {str(order_item_id)}')
     else:
         messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
 
@@ -183,7 +192,11 @@ def update_container(request, pk, order_item_id, container_id):
 @permission_required('accounts.is_sorter')
 def delete_container(request, pk, order_item_id, container_id):
     """ Удаление контейнера """
-    delete_container_service(container_id)
+    try:
+        delete_container_service(container_id)
+    except Container.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Контейнера с идентификатором {str(container_id)} не существует')
+
     return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
 
@@ -204,7 +217,11 @@ def packer_product_list(request):
 @permission_required('accounts.is_packer')
 def set_order_as_packed(request, pk):
     """ Пометить заявку с весовым товаром как упакованную """
-    set_order_as_packed_service(pk)
+    try:
+        set_order_as_packed_service(pk)
+    except Order.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Заявки с идентификатором {str(pk)} не существует')
+
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
@@ -212,7 +229,11 @@ def set_order_as_packed(request, pk):
 @permission_required('accounts.is_packer')
 def set_order_item_as_packed(request, order_item_id):
     """ Пометить строку заявки с весовым товаром как упакованную """
-    set_order_item_as_packed_service(order_item_id)
+    try:
+        set_order_item_as_packed_service(order_item_id)
+    except OrderItem.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'В заявке нет строки с идентификатором {str(order_item_id)}')
+
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
@@ -236,6 +257,9 @@ def set_order_as_shipped(request, pk):
         set_order_as_shipped_service(pk)
     except NotSortedException as err:
         messages.add_message(request, messages.ERROR, str(err))
+        return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
+    except Order.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Заявки с идентификатором {str(pk)} не существует')
         return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
     return HttpResponseRedirect(reverse('orders:sorter_list_orders'))

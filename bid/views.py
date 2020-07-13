@@ -1,11 +1,18 @@
 from django.shortcuts import render, redirect
 from django.core.paginator import Paginator
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.views.decorators.http import require_POST
 
 from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
+from accounts.models import ShopUser
 from .forms import SearchForm
+from .models import Category
 from .services import get_product_list_service, search_products_service, get_user_last_orders
+
+
+def page_not_found_view(request, exception):
+    return render(request, 'bid/404.html', {'exc': str(exception)})
 
 
 def index(request):
@@ -18,7 +25,16 @@ def index(request):
 @permission_required('accounts.is_merchandiser')
 def product_list(request, category_slug=None):
     """ Просмотр списка товаров """
-    category, categories, products_list = get_product_list_service(request.user, category_slug)
+    category = None
+    categories = []
+    products_list = []
+
+    try:
+        category, categories, products_list = get_product_list_service(request.user, category_slug)
+    except ShopUser.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+    except Category.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Категория {category_slug} не найдена')
 
     paginator = Paginator(products_list, 12)
     page = request.GET.get('page')
@@ -51,7 +67,12 @@ def prepare_search(request):
 
 def search_results(request, word):
     """ Поиск товаров по ключевому слову"""
-    search_products = search_products_service(request.user, word)
+    search_products = []
+
+    try:
+        search_products = search_products_service(request.user, word)
+    except ShopUser.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
 
     context = {
         'key_word': word,

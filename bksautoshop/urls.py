@@ -27,3 +27,5 @@ urlpatterns = [
     path('', include('bid.urls')),
     path('nested_admin/', include('nested_admin.urls')),
 ]
+
+handler404 = 'bid.views.page_not_found_view'

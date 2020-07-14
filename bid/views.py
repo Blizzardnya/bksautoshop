@@ -1,18 +1,24 @@
-from django.shortcuts import render, redirect
-from django.core.paginator import Paginator
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.core.paginator import Paginator
+from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 
-from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
 from accounts.models import ShopUser
+from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
 from .forms import SearchForm
 from .models import Category
 from .services import get_product_list_service, search_products_service, get_user_last_orders
 
 
-def page_not_found_view(request, exception):
-    return render(request, 'bid/404.html', {'exc': str(exception)})
+def page_not_found_404_view(request, exception):
+    """ Страница с ошибкой 404 """
+    return render(request, 'bid/404.html', status=404)
+
+
+def internal_server_error_500_view(request):
+    """ Страница с ошибкой 500 """
+    return render(request, 'bid/500.html', status=500)
 
 
 def index(request):

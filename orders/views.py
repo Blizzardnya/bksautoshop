@@ -1,23 +1,23 @@
-from django.shortcuts import render, get_object_or_404
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib import messages
+from django.core.paginator import Paginator
+from django.db.utils import Error
+from django.http import HttpResponseRedirect
+from django.shortcuts import render, get_object_or_404
+from django.urls import reverse
 from django.views import generic
 from django.views.decorators.http import require_POST
-from django.core.paginator import Paginator
-from django.http import HttpResponseRedirect
-from django.urls import reverse
-from django.db.utils import Error
 
-from cart.cart import Cart
 from accounts.models import ShopUser
+from cart.cart import Cart
+from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException
+from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm)
 from .models import Order, OrderItem, Container
-from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm,
-                    ContainerPieceOrderItemAddFormDisabled, ContainerWeightOrderItemAddFormDisabled)
 from .services import (create_order_service, set_container_to_order_item_service, update_container_quantity_service,
                        set_container_to_order_service, delete_container_service, set_order_as_packed_service,
                        set_order_item_as_packed_service, set_order_as_shipped_service)
-from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException
+from .utils import get_container_order_add_form
 
 
 @login_required()
@@ -90,21 +90,14 @@ def view_order_item_containers(request, pk, order_item_id):
     """ Просмотр контейнеров для определённой позиции в заявке """
     order_item = get_object_or_404(OrderItem, id=order_item_id)
     containers = [{'container': container,
-                   'form': ContainerWeightOrderItemAddFormDisabled(initial={
-                       'container_number': container.number,
-                       'quantity': container.quantity
-                   }) if container.order_item.product.unit.is_weight_type() else
-                   ContainerPieceOrderItemAddFormDisabled(initial={
-                       'container_number': container.number,
-                       'quantity': int(container.quantity)
-                   })} for container in order_item.containers.all()]
+                   'form': get_container_order_add_form(order_item.product.unit.is_weight_type(),
+                                                        container.number, container.quantity, True)
+                   } for container in order_item.containers.all()]
 
     quantity_in_containers = order_item.get_total_quantity_in_containers()
 
-    if order_item.product.unit.is_weight_type():
-        form = ContainerWeightOrderItemAddForm(initial={'quantity': order_item.quantity - quantity_in_containers})
-    else:
-        form = ContainerPieceOrderItemAddForm(initial={'quantity': int(order_item.quantity - quantity_in_containers)})
+    form = get_container_order_add_form(order_item.product.unit.is_weight_type(), None,
+                                        order_item.quantity - quantity_in_containers, False)
 
     return render(
         request, 'orders/sorter/containers.html',
@@ -169,9 +162,9 @@ def update_container(request, pk, order_item_id, container_id):
     order_item = container.order_item
 
     if order_item.product.unit.is_weight_type():
-        form = ContainerWeightOrderItemAddFormDisabled(request.POST)
+        form = ContainerWeightOrderItemAddForm(request.POST, disabled_number=True)
     else:
-        form = ContainerPieceOrderItemAddFormDisabled(request.POST)
+        form = ContainerPieceOrderItemAddForm(request.POST, disabled_number=True)
 
     if form.is_valid():
         containers_total_quantity = order_item.get_total_quantity_in_containers()

@@ -1,13 +1,13 @@
-from django.test import TestCase
 from django.contrib.auth.models import User
+from django.test import TestCase
 
 from accounts.models import ShopUser
 from bid.models import Product, Category, Unit, ProductMatrix
 from cart.cart import Cart
+from .exceptions import NotPackedException
 from .models import Order, OrderItem, Container
 from .services import (set_order_as_shipped_service, set_order_as_packed_service, set_order_item_as_packed_service,
                        set_container_to_order_item_service, create_order_service, set_container_to_order_service)
-from .exceptions import NotPackedException
 
 
 class OrderTestCase(TestCase):

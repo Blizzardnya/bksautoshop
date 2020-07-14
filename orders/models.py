@@ -8,6 +8,7 @@ from .utils import get_today_process_bid_datetime
 
 
 class PackerOrderManager(models.Manager):
+    """ Выборка заявок для упаковщика """
     def get_queryset(self):
         date = get_today_process_bid_datetime()
 
@@ -18,6 +19,7 @@ class PackerOrderManager(models.Manager):
 
 
 class SorterOrderManager(models.Manager):
+    """ Выборка заявок для сортировщика """
     def get_queryset(self):
         date = get_today_process_bid_datetime()
 
@@ -66,6 +68,7 @@ class Order(models.Model):
         return round(sum(item.get_cost() for item in self.items.all()), 2)
 
     def get_items_for_packer(self):
+        """ Получение только весового неупаковонного товара для упаковщика """
         weight_units = Unit.objects.filter(type=Unit.WEIGHT)
         return self.items.filter(product__unit__in=weight_units, packed=False)
 
@@ -76,6 +79,7 @@ class Order(models.Model):
         return reverse('orders:view_order', args=[self.id])
 
     def is_full_assembled(self):
+        """ Проверка упакован ли весь товар в контейнеры """
         total_items_quantity = 0
         total_containers_quantity = 0
 
@@ -104,9 +108,11 @@ class OrderItem(models.Model):
         verbose_name_plural = 'Строки заявки'
 
     def get_cost(self):
+        """ Стоимость """
         return round(self.price * self.quantity, 2)
 
     def get_total_quantity_in_containers(self):
+        """ Количество товара в контейнерах """
         return round(sum(container.quantity for container in self.containers.all()), 2)
 
     def __str__(self):

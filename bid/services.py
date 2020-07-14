@@ -1,13 +1,13 @@
 import logging
 
-from django.db.models import Q
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchVector
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 
-from .models import Category, Product
 from accounts.models import ShopUser
 from orders.models import Order
+from .models import Category, Product
 
 logger = logging.getLogger(__name__)
 

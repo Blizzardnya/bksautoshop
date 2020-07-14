@@ -1,5 +1,5 @@
-from django.test import TestCase
 from django.contrib.auth.models import User
+from django.test import TestCase
 
 from accounts.models import ShopUser
 from .models import Product, Category, Unit, ProductMatrix, Shop, Stock

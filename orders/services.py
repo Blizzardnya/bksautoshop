@@ -2,14 +2,14 @@ import logging
 from decimal import Decimal
 
 from django.contrib.auth.models import User
-from django.utils import timezone
 from django.db import transaction
 from django.db.utils import Error
+from django.utils import timezone
 
 from accounts.models import ShopUser
-from .models import Order, OrderItem, Container
-from .exceptions import NotPackedException, ContainerOverflowException, NotSortedException
 from cart.cart import Cart
+from .exceptions import NotPackedException, ContainerOverflowException, NotSortedException
+from .models import Order, OrderItem, Container
 
 logger = logging.getLogger(__name__)
 

@@ -9,6 +9,7 @@ from .utils import get_today_process_bid_datetime
 
 class PackerOrderManager(models.Manager):
     """ Выборка заявок для упаковщика """
+
     def get_queryset(self):
         date = get_today_process_bid_datetime()
 
@@ -20,6 +21,7 @@ class PackerOrderManager(models.Manager):
 
 class SorterOrderManager(models.Manager):
     """ Выборка заявок для сортировщика """
+
     def get_queryset(self):
         date = get_today_process_bid_datetime()
 

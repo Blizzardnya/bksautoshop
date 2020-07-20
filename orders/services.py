@@ -9,7 +9,7 @@ from django.utils import timezone
 
 from accounts.models import ShopUser
 from cart.cart import Cart
-from .exceptions import NotPackedException, ContainerOverflowException, NotSortedException
+from .exceptions import NotPackedException, ContainerOverflowException, NotSortedException, CartIsEmptyException
 from .models import Order, OrderItem, Container
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,9 @@ def create_order_service(user: User, cart: Cart) -> Order:
     except ShopUser.DoesNotExist:
         logger.error(f'Пользователь магазина для {str(user)} не найден')
         raise
+
+    if len(cart) == 0:
+        raise CartIsEmptyException
 
     try:
         with transaction.atomic():

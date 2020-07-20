@@ -11,7 +11,7 @@ from django.views.decorators.http import require_POST
 
 from accounts.models import ShopUser
 from cart.cart import Cart
-from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException
+from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException, CartIsEmptyException
 from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm)
 from .models import Order, OrderItem, Container
 from .services import (create_order_service, set_container_to_order_item_service, update_container_quantity_service,
@@ -24,22 +24,19 @@ from .utils import get_container_order_add_form
 @permission_required('orders.add_order')
 def create_order(request):
     """ Создание заявки """
-    if request.method == 'POST':
-        cart = Cart(request.session)
+    cart = Cart(request.session)
 
-        if len(cart) == 0:
-            messages.add_message(request, messages.WARNING, 'Ваша корзина пуста.')
-            return render(request, 'orders/merchandiser/create.html')
+    try:
+        order = create_order_service(request.user, cart)
+        return render(request, 'orders/merchandiser/created.html', context={'order': order})
+    except Error:
+        messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
+    except ShopUser.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+    except CartIsEmptyException as cart_exc:
+        messages.add_message(request, messages.WARNING, str(cart_exc))
 
-        try:
-            order = create_order_service(request.user, cart)
-            return render(request, 'orders/merchandiser/created.html', context={'order': order})
-        except Error:
-            messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
-        except ShopUser.DoesNotExist:
-            messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
-
-    return render(request, 'orders/merchandiser/create.html')
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):

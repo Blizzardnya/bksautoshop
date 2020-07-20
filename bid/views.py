@@ -74,7 +74,7 @@ def prepare_search(request):
 
 
 def search_results(request, word):
-    """ Поиск товаров по ключевому слову"""
+    """ Поиск товаров по ключевому слову """
     search_products = []
 
     try:

@@ -1,5 +1,6 @@
 import logging
 from decimal import Decimal
+from typing import List
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -208,4 +209,19 @@ def set_order_as_shipped_service(order_id: int) -> None:
             logger.info(f'{str(order)} отмечана как отправленная.')
     except Order.DoesNotExist:
         logger.error(f'Заявки с идентификатором {str(order_id)} не существует')
+        raise
+
+
+def get_orders_by_shop_user_service(user: User) -> List:
+    """
+    Получение списка заявок для пользователя магазина
+    :param user: Пользователь
+    :return: Заявки
+    """
+    try:
+        return Order.objects.filter(
+            user=ShopUser.objects.get(user=user)
+        ).order_by('-created')
+    except ShopUser.DoesNotExist:
+        logger.error(f'Пользователь магазина для {str(user)} не найден')
         raise

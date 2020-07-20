@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 
+from accounts.forms import LoginForm
 from accounts.models import ShopUser
 from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
 from .forms import SearchForm
@@ -24,7 +25,8 @@ def internal_server_error_500_view(request):
 def index(request):
     """ Главная страница приложения """
     last_orders = get_user_last_orders(request.user, 3)
-    return render(request, 'bid/index.html', {'last_orders': last_orders})
+    form = LoginForm()
+    return render(request, 'bid/index.html', {'last_orders': last_orders, 'form': form})
 
 
 @login_required()

@@ -6,17 +6,6 @@
 {% block content %}
     <div class="col-xl-10 col-md-8">
         <div class="container-fluid" style="margin-top: 3%">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-
             <form action="{% url "orders:order_create" %}" method="post">
                 {% csrf_token %}
                 <div class="form-group">

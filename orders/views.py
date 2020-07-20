@@ -16,7 +16,7 @@ from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, Cont
 from .models import Order, OrderItem, Container
 from .services import (create_order_service, set_container_to_order_item_service, update_container_quantity_service,
                        set_container_to_order_service, delete_container_service, set_order_as_packed_service,
-                       set_order_item_as_packed_service, set_order_as_shipped_service)
+                       set_order_item_as_packed_service, set_order_as_shipped_service, get_orders_by_shop_user_service)
 from .utils import get_container_order_add_form
 
 
@@ -28,20 +28,18 @@ def create_order(request):
         cart = Cart(request.session)
 
         if len(cart) == 0:
-            messages.add_message(request, messages.ERROR, 'Ваша корзина пуста.')
-            return render(request, 'orders/merchandiser/create.html')
-        try:
-            order = create_order_service(request.user, cart)
-        except Error:
-            messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
-            return render(request, 'orders/merchandiser/create.html')
-        except ShopUser.DoesNotExist:
-            messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+            messages.add_message(request, messages.WARNING, 'Ваша корзина пуста.')
             return render(request, 'orders/merchandiser/create.html')
 
-        return render(request, 'orders/merchandiser/created.html', context={'order': order})
-    else:
-        return render(request, 'orders/merchandiser/create.html')
+        try:
+            order = create_order_service(request.user, cart)
+            return render(request, 'orders/merchandiser/created.html', context={'order': order})
+        except Error:
+            messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
+        except ShopUser.DoesNotExist:
+            messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+
+    return render(request, 'orders/merchandiser/create.html')
 
 
 class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):
@@ -53,9 +51,14 @@ class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, gen
     permission_required = 'accounts.is_merchandiser'
 
     def get_queryset(self):
-        return Order.objects.filter(
-            user=ShopUser.objects.get(user=self.request.user)
-        ).order_by('-created')
+        try:
+            orders = get_orders_by_shop_user_service(self.request.user)
+        except ShopUser.DoesNotExist:
+            messages.add_message(self.request, messages.ERROR,
+                                 f'Пользователь магазина для {str(self.request.user)} не найден')
+            orders = []
+
+        return orders
 
 
 class MerchandiserOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):

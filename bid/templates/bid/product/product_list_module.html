@@ -9,11 +9,7 @@
                     <p class="card-text">Цена {{ product.price }} руб., за {{ product.unit }}</p>
                     <form action="{% url "cart:cart_add" product.id %}" method="post">
                         {% csrf_token %}
-                        {% if product.unit.is_weight_type %}
-                            {{ cart_weight_product_form|crispy }}
-                        {% else %}
-                            {{ cart_piece_product_form|crispy }}
-                        {% endif %}
+                        {{ product.get_add_item_to_cart_form|crispy }}
                         <input type="submit" value="Добавить" class="btn btn-success">
                     </form>
                 </div>

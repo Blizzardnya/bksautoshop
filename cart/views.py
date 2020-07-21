@@ -5,19 +5,16 @@ from django.views.decorators.http import require_POST
 
 from bid.models import Product
 from .cart import Cart
-from .forms import CartAddWeightProductForm, CartAddPieceProductForm
+from .forms import CartAddProductForm
 
 
 @require_POST
 @permission_required('orders.add_order')
-def cart_add(request, product_id: int):
+def cart_add_view(request, product_id: int):
     """ Добавление товара в корзину """
     cart = Cart(request.session)
     product = get_object_or_404(Product, id=product_id)
-    if product.unit.is_weight_type:
-        form = CartAddWeightProductForm(request.POST)
-    else:
-        form = CartAddPieceProductForm(request.POST)
+    form = CartAddProductForm(request.POST, is_weight_type=product.unit.is_weight_type)
 
     if form.is_valid():
         cd = form.cleaned_data
@@ -26,7 +23,7 @@ def cart_add(request, product_id: int):
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
-def cart_remove(request, product_id: int):
+def cart_remove_view(request, product_id: int):
     """ Удаление товара из корзины """
     cart = Cart(request.session)
     product = get_object_or_404(Product, id=product_id)
@@ -34,7 +31,7 @@ def cart_remove(request, product_id: int):
     return redirect('cart:cart_detail')
 
 
-def cart_clear(request):
+def clear_cart_view(request):
     """ Очистка корзины """
     cart = Cart(request.session)
     cart.clear()
@@ -42,14 +39,12 @@ def cart_clear(request):
 
 
 @login_required()
-def cart_detail(request):
+def cart_detail_view(request):
     """ Просмотр корзины """
     cart = Cart(request.session)
     for item in cart:
-        if item.get('product').unit.is_weight_type():
-            item['update_quantity_form'] = CartAddWeightProductForm(initial={'quantity': item['quantity'],
-                                                                             'update': True})
-        else:
-            item['update_quantity_form'] = CartAddPieceProductForm(initial={'quantity': item['quantity'],
-                                                                            'update': True})
+        item['update_quantity_form'] = CartAddProductForm(
+            initial={'quantity': item['quantity'], 'update': True},
+            is_weight_type=item.get('product').unit.is_weight_type
+        )
     return render(request, 'cart/detail.html', {'cart': cart})

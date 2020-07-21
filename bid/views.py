@@ -4,8 +4,8 @@ from django.core.paginator import Paginator
 from django.shortcuts import render, redirect
 from django.views.decorators.http import require_POST
 
+from accounts.forms import LoginForm
 from accounts.models import ShopUser
-from cart.forms import CartAddWeightProductForm, CartAddPieceProductForm
 from .forms import SearchForm
 from .models import Category
 from .services import get_product_list_service, search_products_service, get_user_last_orders
@@ -24,12 +24,13 @@ def internal_server_error_500_view(request):
 def index(request):
     """ Главная страница приложения """
     last_orders = get_user_last_orders(request.user, 3)
-    return render(request, 'bid/index.html', {'last_orders': last_orders})
+    form = LoginForm()
+    return render(request, 'bid/index.html', {'last_orders': last_orders, 'form': form})
 
 
 @login_required()
 @permission_required('accounts.is_merchandiser')
-def product_list(request, category_slug=None):
+def product_list_view(request, category_slug=None):
     """ Просмотр списка товаров """
     category = None
     categories = []
@@ -49,9 +50,7 @@ def product_list(request, category_slug=None):
     context = {
         'category': category,
         'categories': categories,
-        'products': products,
-        'cart_weight_product_form': CartAddWeightProductForm(),
-        'cart_piece_product_form': CartAddPieceProductForm(),
+        'products': products
     }
 
     return render(request, 'bid/product/list.html', context)
@@ -60,7 +59,7 @@ def product_list(request, category_slug=None):
 @login_required()
 @permission_required('accounts.is_merchandiser')
 @require_POST
-def prepare_search(request):
+def prepare_search_view(request):
     """ Получение и обработка ключевого слова для поиска """
     search_products = None
 
@@ -71,8 +70,8 @@ def prepare_search(request):
     return redirect('bid:search_results', word=search_products)
 
 
-def search_results(request, word):
-    """ Поиск товаров по ключевому слову"""
+def search_results_view(request, word):
+    """ Поиск товаров по ключевому слову """
     search_products = []
 
     try:
@@ -82,9 +81,7 @@ def search_results(request, word):
 
     context = {
         'key_word': word,
-        'products': search_products,
-        'cart_weight_product_form': CartAddWeightProductForm(),
-        'cart_piece_product_form': CartAddPieceProductForm(),
+        'products': search_products
     }
 
     return render(request, 'bid/search.html', context)

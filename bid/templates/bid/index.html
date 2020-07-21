@@ -1,4 +1,5 @@
 {% extends "bid/base.html" %}
+{% load crispy_forms_tags %}
 
 {% block title %}Система заявок - Главная{% endblock %}
 
@@ -16,8 +17,15 @@
                     <p>Склад - {{ request.user.stockuser.stock }}</p>
                 {% endif %}
             {% else %}
-                <a href="{% url 'login' %}" class="btn btn-outline-success my-2 my-sm-0 float-left"
-                   role="button">Войти</a>
+                <div class="col-lg-6">
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        {{ form.username|as_crispy_field }}
+                        {{ form.password|as_crispy_field }}
+                        <input type="submit" class="btn btn-primary" value="Войти">
+                        <input type="hidden" name="next" value="{{ next }}">
+                    </form>
+                </div>
             {% endif %}
         </div>
         {% if request.user.is_authenticated and perms.accounts.is_merchandiser %}

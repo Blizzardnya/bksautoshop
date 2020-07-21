@@ -11,37 +11,31 @@ from django.views.decorators.http import require_POST
 
 from accounts.models import ShopUser
 from cart.cart import Cart
-from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException
-from .forms import (ContainerOrderAddForm, ContainerWeightOrderItemAddForm, ContainerPieceOrderItemAddForm)
+from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException, CartIsEmptyException
+from .forms import (AddContainerToOrderForm, AddContainerToOrderItemForm)
 from .models import Order, OrderItem, Container
-from .services import (create_order_service, set_container_to_order_item_service, update_container_quantity_service,
-                       set_container_to_order_service, delete_container_service, set_order_as_packed_service,
-                       set_order_item_as_packed_service, set_order_as_shipped_service)
-from .utils import get_container_order_add_form
+from .services import (create_order_service, set_container_to_order_item_service, set_container_to_order_service,
+                       delete_container_service, set_order_as_packed_service, update_order_item_container_service,
+                       set_order_item_as_packed_service, set_order_as_shipped_service, get_orders_by_shop_user_service)
 
 
 @login_required()
 @permission_required('orders.add_order')
-def create_order(request):
+def create_order_view(request):
     """ Создание заявки """
-    if request.method == 'POST':
-        cart = Cart(request.session)
+    cart = Cart(request.session)
 
-        if len(cart) == 0:
-            messages.add_message(request, messages.ERROR, 'Ваша корзина пуста.')
-            return render(request, 'orders/merchandiser/create.html')
-        try:
-            order = create_order_service(request.user, cart)
-        except Error:
-            messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
-            return render(request, 'orders/merchandiser/create.html')
-        except ShopUser.DoesNotExist:
-            messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
-            return render(request, 'orders/merchandiser/create.html')
-
+    try:
+        order = create_order_service(request.user, cart)
         return render(request, 'orders/merchandiser/created.html', context={'order': order})
-    else:
-        return render(request, 'orders/merchandiser/create.html')
+    except Error:
+        messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
+    except ShopUser.DoesNotExist:
+        messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+    except CartIsEmptyException as cart_exc:
+        messages.add_message(request, messages.WARNING, str(cart_exc))
+
+    return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
 
 class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.ListView):
@@ -53,9 +47,14 @@ class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, gen
     permission_required = 'accounts.is_merchandiser'
 
     def get_queryset(self):
-        return Order.objects.filter(
-            user=ShopUser.objects.get(user=self.request.user)
-        ).order_by('-created')
+        try:
+            orders = get_orders_by_shop_user_service(self.request.user)
+        except ShopUser.DoesNotExist:
+            messages.add_message(self.request, messages.ERROR,
+                                 f'Пользователь магазина для {str(self.request.user)} не найден')
+            orders = []
+
+        return orders
 
 
 class MerchandiserOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.DetailView):
@@ -80,24 +79,30 @@ class SorterOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.Detai
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['container_order_form'] = ContainerOrderAddForm()
+        context['container_order_form'] = AddContainerToOrderForm()
         return context
 
 
 @login_required()
 @permission_required('accounts.is_sorter')
-def view_order_item_containers(request, pk, order_item_id):
+def order_item_containers_view(request, pk, order_item_id):
     """ Просмотр контейнеров для определённой позиции в заявке """
     order_item = get_object_or_404(OrderItem, id=order_item_id)
     containers = [{'container': container,
-                   'form': get_container_order_add_form(order_item.product.unit.is_weight_type(),
-                                                        container.number, container.quantity, True)
+                   'form': AddContainerToOrderItemForm(
+                       initial={
+                           'container_number': container.number,
+                           'quantity': container.quantity_by_weight_type
+                       },
+                       disabled_number=True,
+                       is_weight_type=order_item.product.unit.is_weight_type
+                   )
                    } for container in order_item.containers.all()]
 
-    quantity_in_containers = order_item.get_total_quantity_in_containers()
-
-    form = get_container_order_add_form(order_item.product.unit.is_weight_type(), None,
-                                        order_item.quantity - quantity_in_containers, False)
+    form = AddContainerToOrderItemForm(
+        initial={'quantity': order_item.missing_quantity_in_containers},
+        is_weight_type=order_item.product.unit.is_weight_type
+    )
 
     return render(
         request, 'orders/sorter/containers.html',
@@ -108,19 +113,15 @@ def view_order_item_containers(request, pk, order_item_id):
 @login_required()
 @require_POST
 @permission_required('accounts.is_sorter')
-def set_container_to_order(request, pk):
+def set_container_to_order_view(request, pk):
     """ Добавление контейнера для каждой строки заявки """
-    container_form = ContainerOrderAddForm(request.POST)
+    container_form = AddContainerToOrderForm(request.POST)
 
     if container_form.is_valid():
         try:
-            assembled_products, not_packed = set_container_to_order_service(
+            not_packed = set_container_to_order_service(
                 pk, container_form.cleaned_data['container_number']
             )
-
-            if assembled_products:
-                messages.add_message(request, messages.WARNING,
-                                     f'Товары {assembled_products} укомплектованы в полном количестве')
 
             if not_packed:
                 messages.add_message(request, messages.ERROR, f'Товары {not_packed} ещё не упакованы')
@@ -135,9 +136,12 @@ def set_container_to_order(request, pk):
 @login_required()
 @require_POST
 @permission_required('accounts.is_sorter')
-def set_container_to_order_item(request, pk, order_item_id):
+def set_container_to_order_item_view(request, pk, order_item_id):
     """ Добавление контейнера к строке заявки"""
-    form = ContainerWeightOrderItemAddForm(request.POST)
+    form = AddContainerToOrderItemForm(
+        request.POST,
+        is_weight_type=True
+    )
 
     if form.is_valid():
         try:
@@ -156,25 +160,23 @@ def set_container_to_order_item(request, pk, order_item_id):
 @login_required()
 @require_POST
 @permission_required('accounts.is_sorter')
-def update_container(request, pk, order_item_id, container_id):
+def update_container_view(request, pk, order_item_id, container_id):
     """ Обновление контейнера """
-    container = get_object_or_404(Container, id=container_id)
-    order_item = container.order_item
-
-    if order_item.product.unit.is_weight_type():
-        form = ContainerWeightOrderItemAddForm(request.POST, disabled_number=True)
-    else:
-        form = ContainerPieceOrderItemAddForm(request.POST, disabled_number=True)
+    form = AddContainerToOrderItemForm(
+        request.POST,
+        disabled_number=True,
+        is_weight_type=True
+    )
 
     if form.is_valid():
-        containers_total_quantity = order_item.get_total_quantity_in_containers()
-
-        if order_item.quantity >= containers_total_quantity - container.quantity + form.cleaned_data['quantity']:
-            update_container_quantity_service(container, form.cleaned_data['quantity'], False)
+        try:
+            update_order_item_container_service(container_id, form.cleaned_data['quantity'])
             messages.add_message(request, messages.SUCCESS, 'Контейнер обновлён')
-        else:
+        except Container.DoesNotExist:
             messages.add_message(request, messages.ERROR,
-                                 'Количество товара в контейнере не может быть больше количества товара по заявке')
+                                 f'Контейнера с идентификатором {str(container_id)} не существует')
+        except ContainerOverflowException as err:
+            messages.add_message(request, messages.ERROR, err)
     else:
         messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
 
@@ -183,7 +185,7 @@ def update_container(request, pk, order_item_id, container_id):
 
 @login_required()
 @permission_required('accounts.is_sorter')
-def delete_container(request, pk, order_item_id, container_id):
+def delete_container_view(request, pk, order_item_id, container_id):
     """ Удаление контейнера """
     try:
         delete_container_service(container_id)
@@ -195,7 +197,7 @@ def delete_container(request, pk, order_item_id, container_id):
 
 @login_required()
 @permission_required('accounts.is_packer')
-def packer_product_list(request):
+def packer_product_list_view(request):
     """ Просмотр списка заявок для упаковщика """
     orders_list = Order.orders_for_packer.all()
 
@@ -208,7 +210,7 @@ def packer_product_list(request):
 
 @login_required()
 @permission_required('accounts.is_packer')
-def set_order_as_packed(request, pk):
+def set_order_as_packed_view(request, pk):
     """ Пометить заявку с весовым товаром как упакованную """
     try:
         set_order_as_packed_service(pk)
@@ -220,7 +222,7 @@ def set_order_as_packed(request, pk):
 
 @login_required()
 @permission_required('accounts.is_packer')
-def set_order_item_as_packed(request, order_item_id):
+def set_order_item_as_packed_view(request, order_item_id):
     """ Пометить строку заявки с весовым товаром как упакованную """
     try:
         set_order_item_as_packed_service(order_item_id)
@@ -244,7 +246,7 @@ class SorterOrderListView(LoginRequiredMixin, PermissionRequiredMixin, generic.L
 
 @login_required()
 @permission_required('accounts.is_sorter')
-def set_order_as_shipped(request, pk):
+def set_order_as_shipped_view(request, pk):
     """ Изменение статуса заявки на отправлено """
     try:
         set_order_as_shipped_service(pk)

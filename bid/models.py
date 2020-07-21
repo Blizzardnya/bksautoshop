@@ -2,6 +2,8 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.urls import reverse
 
+from cart.forms import CartAddProductForm
+
 
 class Unit(models.Model):
     """ Модель меры исчисления """
@@ -25,6 +27,7 @@ class Unit(models.Model):
     def __str__(self):
         return self.short_name
 
+    @property
     def is_weight_type(self):
         return self.type == self.WEIGHT
 
@@ -95,6 +98,9 @@ class Product(models.Model):
 
     def display_matrix(self):
         return ', '.join([matrix.name for matrix in self.matrix.all()])
+
+    def get_add_item_to_cart_form(self):
+        return CartAddProductForm(is_weight_type=self.unit.is_weight_type)
 
     display_matrix.short_description = 'Матрицы'
 

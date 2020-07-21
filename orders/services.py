@@ -1,6 +1,6 @@
 import logging
 from decimal import Decimal
-from typing import List
+from typing import List, Union
 
 from django.contrib.auth.models import User
 from django.db import transaction
@@ -41,7 +41,7 @@ def create_order_service(user: User, cart: Cart) -> Order:
                     product=item['product'],
                     price=item['price'],
                     quantity=item['quantity'],
-                    packed=not item['product'].unit.is_weight_type())
+                    packed=not item['product'].unit.is_weight_type)
 
         logger.info(f'{str(order)} была создана пользователем {shop_user}')
         cart.clear()
@@ -52,7 +52,8 @@ def create_order_service(user: User, cart: Cart) -> Order:
     return order
 
 
-def update_container_quantity_service(container: Container, quantity: Decimal, increment_quantity: bool) -> None:
+def _update_container_quantity_service(container: Container, quantity: Union[Decimal, int],
+                                       increment_quantity: bool) -> None:
     """
     Обновление количества товара в контейнере
     :param container: Контейнер
@@ -66,7 +67,30 @@ def update_container_quantity_service(container: Container, quantity: Decimal, i
     container.save(update_fields=['quantity'])
 
 
-def set_container_to_order_item_service(container_number: int, order_item_id: int, quantity: Decimal) -> None:
+def update_order_item_container_service(container_id: int, quantity: Union[Decimal, int]) -> None:
+    """
+    Обновление кол-ва товара в контейнере для строки заявки
+    :param container_id: Идентификатор контейнера
+    :param quantity: Кол-во
+    """
+    try:
+        container = Container.objects.get(id=container_id)
+        order_item = container.order_item
+
+        if container.quantity != quantity:
+            # Проверка на переполнение
+            # Кол-во недостающего товара + Предыдущее кол-во >= Новое кол-во
+            if order_item.missing_quantity_in_containers + container.quantity >= quantity:
+                _update_container_quantity_service(container, quantity, False)
+            else:
+                raise ContainerOverflowException
+    except Container.DoesNotExist:
+        logger.error(f'Контейнер с идентификатором {str(container_id)} не найден')
+        raise
+
+
+def set_container_to_order_item_service(container_number: int, order_item_id: int,
+                                        quantity: Union[Decimal, int]) -> None:
     """
     Добавление контейнера для строки завки
     :param container_number: Номер контейнера
@@ -79,54 +103,49 @@ def set_container_to_order_item_service(container_number: int, order_item_id: in
         if not order_item.packed:
             raise NotPackedException
 
-        containers_total_quantity = order_item.get_total_quantity_in_containers()
-
-        if not order_item.quantity >= containers_total_quantity + quantity:
+        if order_item.missing_quantity_in_containers < quantity:
             raise ContainerOverflowException
 
         container, created = Container.objects.get_or_create(order_item=order_item, number=container_number,
                                                              defaults={'quantity': quantity})
 
         if not created:
-            update_container_quantity_service(container, quantity, True)
+            _update_container_quantity_service(container, quantity, True)
     except OrderItem.DoesNotExist:
         logger.error(f'В заявке нет строки с идентификатором {str(order_item_id)}')
         raise
 
 
-def set_container_to_order_service(order_id: int, container_number: int):
+def set_container_to_order_service(order_id: int, container_number: int) -> List[str]:
     """
     Установка контейнера для всех позиций в заявке
     :param order_id: Идентификатор заявки
     :param container_number: Номер контейнера
-    :return: Список позиций уже размещённых в контейнеры, Список не упакованных товаров
+    :return: Список не упакованных товаров
     """
     try:
         order = Order.objects.get(id=order_id)
-        assembled_products = []
         not_packed = []
 
         for item in order.items.all():
             if item.packed:
-                container_total_quantity = item.get_total_quantity_in_containers()
+                missing_quantity = item.missing_quantity_in_containers
 
-                if container_total_quantity < item.quantity:
+                if missing_quantity != 0:
                     container, created = Container.objects.get_or_create(
                         order_item=item, number=container_number,
-                        defaults={'quantity': item.quantity-container_total_quantity}
+                        defaults={'quantity': missing_quantity}
                     )
 
                     if not created:
-                        update_container_quantity_service(container, item.quantity, False)
-                else:
-                    assembled_products.append(item.product.name)
+                        _update_container_quantity_service(container, missing_quantity, True)
             else:
                 not_packed.append(item.product.name)
     except Order.DoesNotExist:
         logger.error(f'Заявки с идентификатором {str(order_id)} не существует')
         raise
 
-    return assembled_products, not_packed
+    return not_packed
 
 
 def delete_container_service(container_id: int) -> None:

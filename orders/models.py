@@ -80,6 +80,7 @@ class Order(models.Model):
     def get_absolute_url(self):
         return reverse('orders:view_order', args=[self.id])
 
+    @property
     def is_full_assembled(self):
         """ Проверка упакован ли весь товар в контейнеры """
         total_items_quantity = 0
@@ -117,9 +118,15 @@ class OrderItem(models.Model):
         """ Количество товара в контейнерах """
         return round(sum(container.quantity for container in self.containers.all()), 2)
 
+    @property
+    def missing_quantity_in_containers(self):
+        missing_quantity = self.quantity - self.get_total_quantity_in_containers()
+        return missing_quantity if self.product.unit.is_weight_type else int(missing_quantity)
+
     def __str__(self):
         return self.product.name
 
+    @property
     def packed_to_str(self):
         return 'Да' if self.packed else 'Нет'
 
@@ -135,6 +142,10 @@ class Container(models.Model):
     class Meta:
         verbose_name = "Контейнер"
         verbose_name_plural = "Контейнеры"
+
+    @property
+    def quantity_by_weight_type(self):
+        return self.quantity if self.order_item.product.unit.is_weight_type else int(self.quantity)
 
     def __str__(self):
         return self.number

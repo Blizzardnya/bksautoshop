@@ -10,7 +10,7 @@ def update_assembled(sender, instance, **kwargs):
     """ Сигнал для обновления статуса и времени заказа """
     order = instance.order_item.order
 
-    if order.is_full_assembled():
+    if order.is_full_assembled:
         order.status = Order.ASSEMBLED
         order.assembled = timezone.now()
     else:

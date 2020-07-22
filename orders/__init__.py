@@ -1,1 +1,1 @@
-default_app_config = 'bksautoshop.orders.apps.OrdersConfig'
+default_app_config = 'config.orders.apps.OrdersConfig'

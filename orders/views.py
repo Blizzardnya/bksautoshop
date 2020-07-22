@@ -4,7 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.core.paginator import Paginator
 from django.db.utils import Error
 from django.http import HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render
 from django.urls import reverse
 from django.views import generic
 from django.views.decorators.http import require_POST
@@ -14,26 +14,27 @@ from cart.cart import Cart
 from .exceptions import ContainerOverflowException, NotPackedException, NotSortedException, CartIsEmptyException
 from .forms import (AddContainerToOrderForm, AddContainerToOrderItemForm)
 from .models import Order, OrderItem, Container
-from .services import (create_order_service, set_container_to_order_item_service, set_container_to_order_service,
-                       delete_container_service, set_order_as_packed_service, update_order_item_container_service,
-                       set_order_item_as_packed_service, set_order_as_shipped_service, get_orders_by_shop_user_service)
+from .services.container_services import (set_container_to_order_service, set_container_to_order_item_service,
+                                          delete_container_service, update_order_item_container_service,
+                                          get_order_item_and_containers_with_form)
+from .services.order_services import (create_order_service, set_order_as_packed_service,
+                                      set_order_as_shipped_service, set_order_item_as_packed_service,
+                                      get_orders_by_shop_user_service)
 
 
 @login_required()
 @permission_required('orders.add_order')
 def create_order_view(request):
     """ Создание заявки """
-    cart = Cart(request.session)
-
     try:
-        order = create_order_service(request.user, cart)
+        order = create_order_service(request.user, Cart(request.session))
         return render(request, 'orders/merchandiser/created.html', context={'order': order})
     except Error:
-        messages.add_message(request, messages.ERROR, 'При создании заявки произошла ошибка')
+        messages.error(request, 'При создании заявки произошла ошибка')
     except ShopUser.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+        messages.error(request, f'Пользователь магазина для {str(request.user)} не найден')
     except CartIsEmptyException as cart_exc:
-        messages.add_message(request, messages.WARNING, str(cart_exc))
+        messages.warning(request, str(cart_exc))
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -47,12 +48,12 @@ class MerchandiserOrderListView(LoginRequiredMixin, PermissionRequiredMixin, gen
     permission_required = 'accounts.is_merchandiser'
 
     def get_queryset(self):
+        orders = []
+
         try:
             orders = get_orders_by_shop_user_service(self.request.user)
         except ShopUser.DoesNotExist:
-            messages.add_message(self.request, messages.ERROR,
-                                 f'Пользователь магазина для {str(self.request.user)} не найден')
-            orders = []
+            messages.error(self.request, f'Пользователь магазина для {str(self.request.user)} не найден')
 
         return orders
 
@@ -87,22 +88,15 @@ class SorterOrderView(LoginRequiredMixin, PermissionRequiredMixin, generic.Detai
 @permission_required('accounts.is_sorter')
 def order_item_containers_view(request, pk, order_item_id):
     """ Просмотр контейнеров для определённой позиции в заявке """
-    order_item = get_object_or_404(OrderItem, id=order_item_id)
-    containers = [{'container': container,
-                   'form': AddContainerToOrderItemForm(
-                       initial={
-                           'container_number': container.number,
-                           'quantity': container.quantity_by_weight_type
-                       },
-                       disabled_number=True,
-                       is_weight_type=order_item.product.unit.is_weight_type
-                   )
-                   } for container in order_item.containers.all()]
-
-    form = AddContainerToOrderItemForm(
-        initial={'quantity': order_item.missing_quantity_in_containers},
-        is_weight_type=order_item.product.unit.is_weight_type
-    )
+    try:
+        order_item, containers = get_order_item_and_containers_with_form(order_item_id)
+        form = AddContainerToOrderItemForm(
+            initial={'quantity': order_item.missing_quantity_in_containers},
+            is_weight_type=order_item.product.unit.is_weight_type
+        )
+    except OrderItem.DoesNotExist:
+        messages.error(request, f'В заявке нет строки с идентификатором {str(order_item_id)}')
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
     return render(
         request, 'orders/sorter/containers.html',
@@ -119,16 +113,14 @@ def set_container_to_order_view(request, pk):
 
     if container_form.is_valid():
         try:
-            not_packed = set_container_to_order_service(
-                pk, container_form.cleaned_data['container_number']
-            )
+            not_packed = set_container_to_order_service(pk, container_form.cleaned_data['container_number'])
 
             if not_packed:
-                messages.add_message(request, messages.ERROR, f'Товары {not_packed} ещё не упакованы')
+                messages.error(request, f'Товары {not_packed} ещё не упакованы')
         except Order.DoesNotExist:
-            messages.add_message(request, messages.ERROR, f'Заявки с идентификатором {str(pk)} не существует')
+            messages.error(request, f'Заявки с идентификатором {str(pk)} не существует')
     else:
-        messages.add_message(request, messages.ERROR, 'Контейнер не указан')
+        messages.error(request, 'Контейнер не указан')
 
     return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
@@ -148,11 +140,11 @@ def set_container_to_order_item_view(request, pk, order_item_id):
             set_container_to_order_item_service(form.cleaned_data['container_number'], order_item_id,
                                                 form.cleaned_data['quantity'])
         except (ContainerOverflowException, NotPackedException) as err:
-            messages.add_message(request, messages.ERROR, str(err))
+            messages.error(request, err)
         except OrderItem.DoesNotExist:
-            messages.add_message(request, messages.ERROR, f'В заявке нет строки с идентификатором {str(order_item_id)}')
+            messages.error(request, f'В заявке нет строки с идентификатором {str(order_item_id)}')
     else:
-        messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
+        messages.error(request, 'Введены некоректные данные')
 
     return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
@@ -171,12 +163,11 @@ def update_container_view(request, pk, order_item_id, container_id):
     if form.is_valid():
         try:
             update_order_item_container_service(container_id, form.cleaned_data['quantity'])
-            messages.add_message(request, messages.SUCCESS, 'Контейнер обновлён')
+            messages.success(request, 'Контейнер обновлён')
         except Container.DoesNotExist:
-            messages.add_message(request, messages.ERROR,
-                                 f'Контейнера с идентификатором {str(container_id)} не существует')
+            messages.error(request, f'Контейнера с идентификатором {str(container_id)} не существует')
         except ContainerOverflowException as err:
-            messages.add_message(request, messages.ERROR, err)
+            messages.error(request, err)
     else:
         messages.add_message(request, messages.ERROR, 'Введены некоректные данные')
 
@@ -190,7 +181,7 @@ def delete_container_view(request, pk, order_item_id, container_id):
     try:
         delete_container_service(container_id)
     except Container.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'Контейнера с идентификатором {str(container_id)} не существует')
+        messages.error(request, f'Контейнера с идентификатором {str(container_id)} не существует')
 
     return HttpResponseRedirect(reverse('orders:order_item_containers', args=[pk, order_item_id]))
 
@@ -199,9 +190,7 @@ def delete_container_view(request, pk, order_item_id, container_id):
 @permission_required('accounts.is_packer')
 def packer_product_list_view(request):
     """ Просмотр списка заявок для упаковщика """
-    orders_list = Order.orders_for_packer.all()
-
-    paginator = Paginator(orders_list, 12)
+    paginator = Paginator(Order.orders_for_packer.all(), 12)
     page = request.GET.get('page')
     orders = paginator.get_page(page)
 
@@ -215,7 +204,7 @@ def set_order_as_packed_view(request, pk):
     try:
         set_order_as_packed_service(pk)
     except Order.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'Заявки с идентификатором {str(pk)} не существует')
+        messages.error(request, f'Заявки с идентификатором {str(pk)} не существует')
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -227,7 +216,7 @@ def set_order_item_as_packed_view(request, order_item_id):
     try:
         set_order_item_as_packed_service(order_item_id)
     except OrderItem.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'В заявке нет строки с идентификатором {str(order_item_id)}')
+        messages.error(request, f'В заявке нет строки с идентификатором {str(order_item_id)}')
 
     return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
 
@@ -251,10 +240,10 @@ def set_order_as_shipped_view(request, pk):
     try:
         set_order_as_shipped_service(pk)
     except NotSortedException as err:
-        messages.add_message(request, messages.ERROR, str(err))
+        messages.error(request, err)
         return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
     except Order.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'Заявки с идентификатором {str(pk)} не существует')
+        messages.error(request, f'Заявки с идентификатором {str(pk)} не существует')
         return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
     return HttpResponseRedirect(reverse('orders:sorter_list_orders'))

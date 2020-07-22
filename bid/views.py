@@ -39,9 +39,9 @@ def product_list_view(request, category_slug=None):
     try:
         category, categories, products_list = get_product_list_service(request.user, category_slug)
     except ShopUser.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+        messages.error(request, f'Пользователь магазина для {str(request.user)} не найден')
     except Category.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'Категория {category_slug} не найдена')
+        messages.error(request, f'Категория {category_slug} не найдена')
 
     paginator = Paginator(products_list, 12)
     page = request.GET.get('page')
@@ -61,13 +61,13 @@ def product_list_view(request, category_slug=None):
 @require_POST
 def prepare_search_view(request):
     """ Получение и обработка ключевого слова для поиска """
-    search_products = None
+    search_query = None
 
     form = SearchForm(request.POST)
     if form.is_valid():
-        search_products = form.cleaned_data['search_input']
+        search_query = form.cleaned_data['search_input']
 
-    return redirect('bid:search_results', word=search_products)
+    return redirect('bid:search_results', word=search_query)
 
 
 def search_results_view(request, word):
@@ -77,7 +77,7 @@ def search_results_view(request, word):
     try:
         search_products = search_products_service(request.user, word)
     except ShopUser.DoesNotExist:
-        messages.add_message(request, messages.ERROR, f'Пользователь магазина для {str(request.user)} не найден')
+        messages.error(request, f'Пользователь магазина для {str(request.user)} не найден')
 
     context = {
         'key_word': word,

@@ -3,7 +3,6 @@ import os
 from django.contrib.messages import constants as message_constants
 from django.utils.timezone import datetime
 
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Application definition
@@ -35,7 +34,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'bksautoshop.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -54,8 +53,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'bksautoshop.wsgi.application'
-
+WSGI_APPLICATION = 'config.wsgi.application'
 
 MESSAGE_TAGS = {message_constants.ERROR: 'danger'}
 
@@ -81,7 +79,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.2/topics/i18n/
 
@@ -94,7 +91,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/

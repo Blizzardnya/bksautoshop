@@ -1,9 +1,9 @@
 from django.utils import timezone
 
 try:
-    from bksautoshop.local_settings import BID_TIME
+    from config.local_settings import BID_TIME
 except (ImportError, ModuleNotFoundError):
-    from bksautoshop.prod_settings import BID_TIME
+    from config.prod_settings import BID_TIME
 
 
 def get_today_process_bid_datetime() -> timezone.datetime:

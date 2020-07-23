@@ -239,11 +239,10 @@ def set_order_as_shipped_view(request, pk):
     """ Изменение статуса заявки на отправлено """
     try:
         set_order_as_shipped_service(pk)
+        return HttpResponseRedirect(reverse('orders:sorter_list_orders'))
     except NotSortedException as err:
         messages.error(request, err)
-        return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
     except Order.DoesNotExist:
         messages.error(request, f'Заявки с идентификатором {str(pk)} не существует')
-        return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))
 
-    return HttpResponseRedirect(reverse('orders:sorter_list_orders'))
+    return HttpResponseRedirect(reverse('orders:sorter_view_order', args=[pk]))

@@ -17,7 +17,8 @@ urlpatterns = [
             path('create/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
             path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
         ])),
-        path('orders/', include('orders.api.urls'))
+        path('orders/', include('orders.api.urls')),
+        path('bid/', include('bid.api.urls')),
     ]))
 ]
 

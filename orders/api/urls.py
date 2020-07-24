@@ -6,4 +6,5 @@ app_name = 'orders_api'
 
 urlpatterns = [
     path('by_status', orders_api.OrdersByStatusAPIView.as_view()),
+    path('<int:pk>', orders_api.OrderApiView.as_view()),
 ]

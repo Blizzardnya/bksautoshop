@@ -6,7 +6,8 @@ app_name = 'bid_api'
 
 urlpatterns = [
     path('products/', include([
-        path('', api.PrioductsApiView.as_view()),
-        path('<int:pk>', api.PrioductsApiView.as_view()),
-    ]))
+        path('', api.ProductsApiView.as_view()),
+        path('<int:pk>', api.ProductsApiView.as_view()),
+    ])),
+    path('categories/', api.CategoriesApiView.as_view()),
 ]

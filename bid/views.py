@@ -8,7 +8,7 @@ from accounts.forms import LoginForm
 from accounts.models import ShopUser
 from .forms import SearchForm
 from .models import Category
-from .services import get_product_list_service, search_products_service, get_user_last_orders
+from .services import get_product_list_service, search_products_service, get_user_last_orders_service
 
 
 def page_not_found_404_view(request, exception):
@@ -23,7 +23,7 @@ def internal_server_error_500_view(request):
 
 def index(request):
     """ Главная страница приложения """
-    last_orders = get_user_last_orders(request.user, 3)
+    last_orders = get_user_last_orders_service(request.user, 3)
     form = LoginForm()
     return render(request, 'bid/index.html', {'last_orders': last_orders, 'form': form})
 

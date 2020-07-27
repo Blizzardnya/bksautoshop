@@ -1,6 +1,7 @@
+from pytils.translit import slugify
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 
-from bid.exceptions import ProductAlreadyExistException
 from bid.models import Product, Category, Unit, ProductMatrix
 
 
@@ -10,6 +11,18 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ('id', 'name', 'root_category')
+
+    def create(self, validated_data):
+        name = validated_data.pop('name')
+        category, created = Category.objects.get_or_create(
+            name=name,
+            defaults={'slug': slugify(name), 'root_category': validated_data.get('root_category')}
+        )
+
+        if not created:
+            raise ValidationError('Категория с таким именем уже существует')
+
+        return category
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -24,11 +37,11 @@ class ProductSerializer(serializers.ModelSerializer):
         matrix = validated_data.pop('matrix')
         product, created = Product.objects.get_or_create(
             barcode=barcode,
-            defaults={**validated_data}
+            defaults={'slug': slugify(validated_data.get('name')), **validated_data}
         )
 
         if not created:
-            raise ProductAlreadyExistException
+            raise ValidationError('Товар с таким штрих-кодом уже существует')
 
         product.matrix.set(matrix)
 

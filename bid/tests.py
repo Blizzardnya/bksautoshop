@@ -3,7 +3,7 @@ from django.test import TestCase
 
 from accounts.models import ShopUser
 from .models import Product, Category, Unit, ProductMatrix, Shop, Stock
-from .services import search_products_service, get_product_list_service
+from .services import search_products_service, get_product_list_service, get_categories_by_root_category_service
 
 
 class BidTestCase(TestCase):
@@ -46,3 +46,34 @@ class BidTestCase(TestCase):
         products = search_products_service(self.test_user, 'goat')
         self.assertEqual(len(products), 1)
         self.assertEqual(products[0], self.test_product_1)
+
+
+class GetCategoriesByRootTestCase(TestCase):
+    def setUp(self) -> None:
+        test_1 = Category.objects.create(name='test_1', slug='test_1', root_category=None)
+        test_1_1 = Category.objects.create(name='test_1_1', slug='test_1_1', root_category=test_1)
+        test_1_2 = Category.objects.create(name='test_1_2', slug='test_1_2', root_category=test_1)
+        test_1_2_1 = Category.objects.create(name='test_1_2_1', slug='test_1_2_1', root_category=test_1_2)
+        test_2 = Category.objects.create(name='test_2', slug='test_2', root_category=None)
+        test_2_1 = Category.objects.create(name='test_2_1', slug='test_2_1', root_category=test_2)
+        self.test_3 = Category.objects.create(name='test_3', slug='test_3', root_category=None)
+        test_3_1 = Category.objects.create(name='test_3_1', slug='test_3_1', root_category=self.test_3)
+        test_3_1_1 = Category.objects.create(name='test_3_1_1', slug='test_3_1_1', root_category=test_3_1)
+        test_3_1_1_1 = Category.objects.create(name='test_3_1_1_1', slug='test_3_1_1_1', root_category=test_3_1_1)
+        test_3_2 = Category.objects.create(name='test_3_2', slug='test_3_2', root_category=self.test_3)
+
+    def test_None_True(self):
+        result = get_categories_by_root_category_service(None, True)
+        self.assertEqual(len(result), 11)
+
+    def test_None_False(self):
+        result = get_categories_by_root_category_service(None, False)
+        self.assertEqual(len(result), 3)
+
+    def test_Value_False(self):
+        result = get_categories_by_root_category_service(self.test_3, False)
+        self.assertEqual(len(result), 2)
+
+    def test_Value_True(self):
+        result = get_categories_by_root_category_service(self.test_3, True)
+        self.assertEqual(len(result), 4)

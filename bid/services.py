@@ -1,4 +1,5 @@
 import logging
+from typing import List
 
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import SearchVector
@@ -61,7 +62,7 @@ def search_products_service(user: User, word: str):
     return search_products
 
 
-def get_user_last_orders(user: User, count: int):
+def get_user_last_orders_service(user: User, count: int):
     """
     Получить последние заявки пользователя
     :param user: Пользователь
@@ -77,3 +78,26 @@ def get_user_last_orders(user: User, count: int):
             pass
 
     return last_orders
+
+
+def get_categories_by_root_category_service(root_category: Category = None, get_all: bool = False) -> List[Category]:
+    """
+    Получение катергорий товаров по родительской категории
+    :param root_category: Роительская категория
+    :param get_all: Признак получения всех категорий
+    :return: Категории
+    """
+    result = []
+
+    if get_all:
+        if root_category:
+            categories = Category.objects.filter(root_category=root_category)
+            result.extend(categories)
+            for category in categories:
+                result.extend(get_categories_by_root_category_service(category, True))
+        else:
+            result = Category.objects.all()
+    else:
+        result = Category.objects.filter(root_category=root_category)
+
+    return result

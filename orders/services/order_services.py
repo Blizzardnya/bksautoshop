@@ -1,3 +1,4 @@
+import itertools
 import logging
 from typing import List
 
@@ -6,7 +7,7 @@ from django.db import transaction, Error
 from django.utils import timezone
 
 from cart.cart import Cart
-from orders.exceptions import NotSortedException, CartIsEmptyException
+from orders.exceptions import NotSortedException, CartIsEmptyException, InvalidOrderStatusException
 from orders.models import ShopUser, Order, OrderItem
 
 logger = logging.getLogger(__name__)
@@ -25,6 +26,21 @@ def get_orders_by_shop_user_service(user: User) -> List:
     except ShopUser.DoesNotExist:
         logger.error(f'Пользователь магазина для {str(user)} не найден')
         raise
+
+
+def get_orders_by_status(status: str) -> List[Order]:
+    """
+    Получения заявок по статусу
+    :param status: Статус
+    :return: Список зявок
+    """
+    if not status:
+        raise KeyError('Статус не задан')
+
+    if not (status in itertools.chain(*Order.ORDER_STATUS)):
+        raise InvalidOrderStatusException
+
+    return Order.objects.filter(status=status)
 
 
 def set_order_as_shipped_service(order_id: int) -> None:

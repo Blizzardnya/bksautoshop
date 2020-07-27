@@ -24,3 +24,26 @@ class CartIsEmptyException(Exception):
 
     def __init__(self):
         super().__init__('Ваша корзина пуста')
+
+
+class OrderStatusException(Exception):
+    """ Вызывается при ошибке в работе со статусом заявки """
+
+    def __init__(self, message):
+        if not message:
+            message = 'Ошибка статуса заяки'
+        super().__init__(message)
+
+
+class InvalidOrderStatusException(OrderStatusException):
+    """ Вызывается при неизвестном статусе для заказа """
+
+    def __init__(self):
+        super().__init__('Неизвестное значение статуса')
+
+
+class NotNewOrderStatusException(OrderStatusException):
+    """ Вызывается если заявка имеет статус отличный от NEW"""
+
+    def __init__(self):
+        super().__init__('Изменения статуса у данной заявки запрещено')

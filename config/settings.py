@@ -16,6 +16,7 @@ INSTALLED_APPS = [
 
     'nested_admin',
     'crispy_forms',
+    'rest_framework',
 
     'bid.apps.BidConfig',
     'accounts.apps.AccountsConfig',
@@ -106,32 +107,14 @@ CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
 CART_SESSION_ID = 'cart'
 
-# REST_FRAMEWORK = {
-#     'DEFAULT_PERMISSION_CLASSES': (
-#         'rest_framework.permissions.IsAdminUser',
-#         'rest_framework.permissions.AllowAny',
-#     ),
-#     'PAGE_SIZE:': 10,
-#     'DEFAULT_AUTHENTICATION_CLASSES': (
-#         'rest_framework.authentication.TokenAuthentication',
-#         'rest_framework.authentication.BasicAuthentication',
-#         'rest_framework.authentication.SessionAuthentication',
-#     ),
-#     'EXCEPTION_HANDLER': 'rest_framework_json_api.exceptions.exception_handler',
-#     'DEFAULT_PAGINATION_CLASS': 'rest_framework_json_api.pagination.PageNumberPagination',
-#     'DEFAULT_PARSER_CLASSES': (
-#         'rest_framework_json_api.parsers.JSONParser',
-#         'rest_framework.parsers.FormParser',
-#         'rest_framework.parsers.MultiPartParser',
-#     ),
-#     'DEFAULT_RENDERER_CLASSES': (
-#         'rest_framework_json_api.renderers.JSONRenderer',
-#         'rest_framework.renderers.BrowsableAPIRenderer',
-#     ),
-#     'DEFAULT_MEADATA_CLASS': 'rest_framework_json_api.metadata.JSONAPIMetadata',
-# }
-
-# CORS_ORIGIN_ALLOW_ALL = True
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
 LOGGING = {
     'version': 1,

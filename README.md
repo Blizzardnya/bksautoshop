@@ -1,11 +1,7 @@
-## Программа для автоматизации формирования заявок на продукты
-#### Требования:
-1. PyCharm
-2. Python 3.7
+## Automation of product orders for stores
+#### Requirements:
+ - Python >= 3.7
 
-#### Развёртывание на пк:
-1. Создать проект в PyCharm с использованием вируальной среды (virtual environment)
-2. Разархивировать исходники в папку с проектом
-3. Выполнить установку зависимосей командой: **pip install -r requirements.txt**
-4. Создать базу данных Postgre
-5. Выполнить миграцию в базу данных командой: **py manage.py migrate**
+#### Description:
+The project allows store users to create orders for some products that are needed in the store. 
+Orders are sent to pickers and packers who prepare the order for shipment.

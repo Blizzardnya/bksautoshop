@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator, EmptyPage
 from rest_framework import permissions
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -10,14 +11,38 @@ from orders.services.order_services import get_orders_by_status
 from .serializers import OrderSerializer
 
 
-class OrdersByStatusAPIView(APIView):
-    """Заявки по статусу"""
+class OrdersAPIView(APIView):
+    """Заявки"""
     permission_classes = [permissions.IsAuthenticated, ]
-    parser_classes = (JSONParser, )
+    parser_classes = (JSONParser,)
 
     def get(self, request):
+        status = request.query_params.get('status')
+
         try:
-            serializer = OrderSerializer(get_orders_by_status(request.query_params.get('status')), many=True)
+            page = int(request.query_params.get('page', 1))
+        except ValueError:
+            return Response({'error': 'Некорректное значение параметра page'}, status=422)
+
+        try:
+            limit = int(request.query_params.get('limit', 50))
+        except ValueError:
+            return Response({'error': 'Некорректное значение параметра limit'}, status=422)
+
+        try:
+            if status is not None:
+                orders = get_orders_by_status(status)
+            else:
+                orders = Order.objects.all()
+
+            paginator = Paginator(orders, limit)
+
+            try:
+                orders_page = paginator.page(page)
+            except EmptyPage:
+                orders_page = paginator.page(paginator.num_pages)
+
+            serializer = OrderSerializer(orders_page, many=True)
         except (InvalidOrderStatusException, KeyError) as err:
             return Response({'error': str(err)}, status=400)
 
@@ -27,7 +52,7 @@ class OrdersByStatusAPIView(APIView):
 class OrderApiView(APIView):
     """ Заявка """
     permission_classes = [permissions.IsAuthenticated, ]
-    parser_classes = (JSONParser, )
+    parser_classes = (JSONParser,)
 
     def get(self, request, pk):
         try:

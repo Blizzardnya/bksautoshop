@@ -6,8 +6,9 @@ from bid.models import Product, Category, Unit, ProductMatrix
 from cart.cart import Cart
 from .exceptions import NotPackedException
 from .models import Order, OrderItem, Container
-from .services import (set_order_as_shipped_service, set_order_as_packed_service, set_order_item_as_packed_service,
-                       set_container_to_order_item_service, create_order_service, set_container_to_order_service)
+from .services.order_services import (set_order_as_shipped_service, set_order_as_packed_service,
+                                      set_order_item_as_packed_service, create_order_service)
+from .services.container_services import (set_container_to_order_item_service, set_container_to_order_service)
 
 
 class OrderTestCase(TestCase):
@@ -75,4 +76,4 @@ class OrderTestCase(TestCase):
 
     def test_set_container_to_order_service_order_exception(self):
         self.assertRaises(Order.DoesNotExist, set_container_to_order_service,
-                          self.test_order_item_1.id+10, 1)
+                          self.test_order_item_1.id + 10, 1)

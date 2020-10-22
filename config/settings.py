@@ -17,6 +17,7 @@ INSTALLED_APPS = [
     'nested_admin',
     'crispy_forms',
     'rest_framework',
+    'django_extensions',
 
     'bid.apps.BidConfig',
     'accounts.apps.AccountsConfig',

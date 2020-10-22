@@ -80,16 +80,16 @@ def get_user_last_orders_service(user: User, count: int):
     return last_orders
 
 
-def get_categories_by_root_category_service(root_category: Category = None, get_all: bool = False) -> List[Category]:
+def get_categories_by_root_category_service(root_category: Category = None, get_nested: bool = False) -> List[Category]:
     """
     Получение катергорий товаров по родительской категории
     :param root_category: Роительская категория
-    :param get_all: Признак получения всех категорий
+    :param get_nested: Признак получения всех категорий
     :return: Категории
     """
     result = []
 
-    if get_all:
+    if get_nested:
         if root_category:
             categories = Category.objects.filter(root_category=root_category)
             result.extend(categories)

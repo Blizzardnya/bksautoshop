@@ -7,8 +7,8 @@ except (ImportError, ModuleNotFoundError):
 
 
 def get_today_process_bid_datetime() -> timezone.datetime:
-    """
-    Получения сегодняшней даты и времени окончания обработки заказов
+    """Получения сегодняшней даты и времени окончания обработки заказов
+
     :return: Дата и время обработки заказов
     """
     today = timezone.now()

@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_order_item_and_containers_with_form(order_item_id: int) -> Tuple[OrderItem, List]:
-    """
-    Получение строки завки и её контейнеров с формами обновления, в которых преодпределена информаця
+    """ Получение строки завки и её контейнеров с формами обновления, в которых преодпределена информаця
+
     :param order_item_id: Идентификатор строки заявки
     :return: Строка заявки, Список контейнеров с формами
     """
@@ -35,8 +35,8 @@ def get_order_item_and_containers_with_form(order_item_id: int) -> Tuple[OrderIt
 
 def _update_container_quantity_service(container: Container, quantity: Union[Decimal, int],
                                        increment_quantity: bool) -> None:
-    """
-    Обновление количества товара в контейнере
+    """Обновление количества товара в контейнере
+
     :param container: Контейнер
     :param quantity: Кол-во
     :param increment_quantity: Нужно ли добавлять кол-во к уже имеющемуся
@@ -49,8 +49,8 @@ def _update_container_quantity_service(container: Container, quantity: Union[Dec
 
 
 def update_order_item_container_service(container_id: int, quantity: Union[Decimal, int]) -> None:
-    """
-    Обновление кол-ва товара в контейнере для строки заявки
+    """Обновление кол-ва товара в контейнере для строки заявки
+
     :param container_id: Идентификатор контейнера
     :param quantity: Кол-во
     """
@@ -71,8 +71,8 @@ def update_order_item_container_service(container_id: int, quantity: Union[Decim
 
 def set_container_to_order_item_service(container_number: int, order_item_id: int,
                                         quantity: Union[Decimal, int]) -> None:
-    """
-    Добавление контейнера для строки завки
+    """Добавление контейнера для строки завки
+
     :param container_number: Номер контейнера
     :param order_item_id: Идентификатор строки заявки
     :param quantity: Кол-во
@@ -97,8 +97,8 @@ def set_container_to_order_item_service(container_number: int, order_item_id: in
 
 
 def set_container_to_order_service(order_id: int, container_number: int) -> List[str]:
-    """
-    Установка контейнера для всех позиций в заявке
+    """Установка контейнера для всех позиций в заявке
+
     :param order_id: Идентификатор заявки
     :param container_number: Номер контейнера
     :return: Список не упакованных товаров
@@ -129,8 +129,8 @@ def set_container_to_order_service(order_id: int, container_number: int) -> List
 
 
 def delete_container_service(container_id: int) -> None:
-    """
-    Удаление контейнера
+    """Удаление контейнера
+
     :param container_id: Идентификатор контейнера
     """
     try:

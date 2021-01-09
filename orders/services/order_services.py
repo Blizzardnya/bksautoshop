@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_orders_by_shop_user_service(user: User) -> List:
-    """
-    Получение списка заявок для пользователя магазина
+    """Получение списка заявок для пользователя магазина
+
     :param user: Пользователь
     :return: Заявки
     """
@@ -29,8 +29,8 @@ def get_orders_by_shop_user_service(user: User) -> List:
 
 
 def get_orders_by_status(status: str) -> List[Order]:
-    """
-    Получения заявок по статусу
+    """Получения заявок по статусу
+
     :param status: Статус
     :return: Список зявок
     """
@@ -44,8 +44,8 @@ def get_orders_by_status(status: str) -> List[Order]:
 
 
 def set_order_as_shipped_service(order_id: int) -> None:
-    """
-    Пометить заявку как отправленную
+    """Пометить заявку как отправленную
+
     :param order_id: Идентификатор заявки
     """
     try:
@@ -63,8 +63,8 @@ def set_order_as_shipped_service(order_id: int) -> None:
 
 
 def _changer_order_status_service(order: Order, status: Order.ORDER_STATUS) -> None:
-    """
-    Изменение статуса заявки
+    """Изменение статуса заявки
+
     :param order: Заявка
     :param status: Статус
     """
@@ -79,8 +79,8 @@ def _changer_order_status_service(order: Order, status: Order.ORDER_STATUS) -> N
 
 
 def set_order_item_as_packed_service(order_item_id: int) -> None:
-    """
-    Пометить строку заявки с весовым товаром как упакованную
+    """Пометить строку заявки с весовым товаром как упакованную
+
     :param order_item_id: Идентификатор строки завки
     """
     try:
@@ -92,8 +92,8 @@ def set_order_item_as_packed_service(order_item_id: int) -> None:
 
 
 def set_order_as_packed_service(order_id: int) -> None:
-    """
-    Пометить заявку с весовым товаром как упакованную
+    """Пометить заявку с весовым товаром как упакованную
+
     :param order_id: Идентификатор заявки
     """
     try:
@@ -107,8 +107,8 @@ def set_order_as_packed_service(order_id: int) -> None:
 
 
 def _change_order_item_packed_state(order_item: OrderItem, packed_state: bool) -> None:
-    """
-    Изменение состояния упаковки строки заявки
+    """Изменение состояния упаковки строки заявки
+
     :param order_item: Строка заявки
     :param packed_state: Состояние
     """
@@ -117,8 +117,8 @@ def _change_order_item_packed_state(order_item: OrderItem, packed_state: bool) -
 
 
 def create_order_service(user: User, cart: Cart) -> Order:
-    """
-    Создание заявки
+    """Создание заявки
+
     :param user: Пользователь
     :param cart: Корзина
     :return: Заявка

@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 def get_product_list_service(user: User, category_slug: str = None):
-    """
-    Получени товаров на основании категории
+    """Получени товаров на основании категории
+
     :param user: Пользователь
     :param category_slug: Категория
     :return: Головная категория, дочерние категории, товары
@@ -45,8 +45,8 @@ def get_product_list_service(user: User, category_slug: str = None):
 
 
 def search_products_service(user: User, word: str):
-    """
-    Поисе товаров по заданному ключевому слову
+    """Поисе товаров по заданному ключевому слову
+
     :param user: Пользователь
     :param word: Клчевое слово
     :return: Товары
@@ -63,8 +63,8 @@ def search_products_service(user: User, word: str):
 
 
 def get_user_last_orders_service(user: User, count: int):
-    """
-    Получить последние заявки пользователя
+    """Получить последние заявки пользователя
+
     :param user: Пользователь
     :param count: Кол-во
     :return: Заявки
@@ -81,8 +81,8 @@ def get_user_last_orders_service(user: User, count: int):
 
 
 def get_categories_by_root_category_service(root_category: Category = None, get_nested: bool = False) -> List[Category]:
-    """
-    Получение катергорий товаров по родительской категории
+    """Получение катергорий товаров по родительской категории
+
     :param root_category: Роительская категория
     :param get_nested: Признак получения всех категорий
     :return: Категории

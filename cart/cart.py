@@ -15,8 +15,8 @@ class Cart:
         self.cart = cart
 
     def add(self, product: Product, quantity: int = 1, update_quantity: bool = False):
-        """
-        Метод добавления товара в корзину
+        """Метод добавления товара в корзину
+
         :param product: Товар
         :param quantity: Количество
         :param update_quantity: Признак обновления
@@ -36,8 +36,8 @@ class Cart:
         self.session.modified = True
 
     def remove(self, product: Product):
-        """
-        Метод удаление товара из корзины
+        """Метод удаление товара из корзины
+
         :param product: Товар
         """
         product_id = str(product.id)
